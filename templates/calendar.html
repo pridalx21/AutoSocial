@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="calendar-container">
+    <div class="calendar-header">
+        <h1>Geplante Posts</h1>
+        <div class="calendar-navigation">
+            <button onclick="previousMonth()" class="nav-button">&lt;</button>
+            <input type="month" id="month-picker" value="{{ current_month }}" onchange="changeMonth(this.value)">
+            <button onclick="nextMonth()" class="nav-button">&gt;</button>
+        </div>
+    </div>
+
+    <div class="calendar" id="calendar">
+        <!-- Calendar will be populated by JavaScript -->
+    </div>
+
+    <!-- Post Details Modal -->
+    <div id="post-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calendar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .calendar-navigation {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .nav-button {
+        background: #0095f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .nav-button:hover {
+        background: #0081d6;
+    }
+
+    #month-picker {
+        padding: 8px;
+        border: 1px solid #dbdbdb;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        padding: 10px;
+        border: 1px solid #dbdbdb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .calendar-day.other-month {
+        background: #f8f8f8;
+        color: #999;
+    }
+
+    .calendar-day.today {
+        border-color: #0095f6;
+        font-weight: bold;
+    }
+
+    .day-header {
+        text-align: right;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .post-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px;
+        margin: 2px 0;
+        background: #f0f9ff;
+        border-radius: 3px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .post-indicator:hover {
+        background: #e1f3ff;
+    }
+
+    .post-format-icon {
+        font-size: 14px;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 600px;
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        right: 20px;
+        top: 10px;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: #0095f6;
+    }
+
+    .post-preview {
+        margin-top: 10px;
+    }
+
+    .post-preview img,
+    .post-preview video {
+        max-width: 100%;
+        border-radius: 4px;
+    }
+
+    .post-details {
+        margin-top: 15px;
+    }
+
+    .post-details p {
+        margin: 5px 0;
+    }
+</style>
+
+<script>
+    // Store posts data from Flask
+    const postsByDate = {{ posts_by_date|tojson|safe }};
+    
+    function generateCalendar(year, month) {
+        const calendar = document.getElementById('calendar');
+        calendar.innerHTML = '';
+
+        // Add day headers
+        const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+        days.forEach(day => {
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'calendar-day day-name';
+            dayHeader.textContent = day;
+            calendar.appendChild(dayHeader);
+        });
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startingDay = firstDay.getDay();
+        
+        // Add days from previous month
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+        for (let i = startingDay - 1; i >= 0; i--) {
+            const day = prevMonthLastDay - i;
+            const dayElement = createDayElement(year, month - 1, day, true);
+            calendar.appendChild(dayElement);
+        }
+
+        // Add days of current month
+        const today = new Date();
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const isToday = today.getDate() === day && 
+                           today.getMonth() === month && 
+                           today.getFullYear() === year;
+            const dayElement = createDayElement(year, month, day, false, isToday);
+            calendar.appendChild(dayElement);
+        }
+
+        // Add days from next month
+        const remainingDays = 42 - (startingDay + lastDay.getDate()); // Always show 6 weeks
+        for (let day = 1; day <= remainingDays; day++) {
+            const dayElement = createDayElement(year, month + 1, day, true);
+            calendar.appendChild(dayElement);
+        }
+    }
+
+    function createDayElement(year, month, day, isOtherMonth, isToday = false) {
+        const date = new Date(year, month, day);
+        const dateString = date.toISOString().split('T')[0];
+        
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day' + 
+                             (isOtherMonth ? ' other-month' : '') +
+                             (isToday ? ' today' : '');
+        
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'day-header';
+        dayHeader.textContent = day;
+        dayElement.appendChild(dayHeader);
+
+        // Add post indicators
+        const posts = postsByDate[dateString] || [];
+        posts.forEach(post => {
+            const indicator = document.createElement('div');
+            indicator.className = 'post-indicator';
+            indicator.onclick = () => showPostDetails(post);
+            
+            const icon = document.createElement('span');
+            icon.className = 'post-format-icon';
+            icon.textContent = getFormatIcon(post.post_format);
+            
+            const time = document.createElement('span');
+            time.textContent = post.time;
+            
+            indicator.appendChild(icon);
+            indicator.appendChild(time);
+            dayElement.appendChild(indicator);
+        });
+
+        return dayElement;
+    }
+
+    function getFormatIcon(format) {
+        const icons = {
+            'feed': '📱',
+            'reel': '🎬',
+            'story': '⭕',
+            'carousel': '📑'
+        };
+        return icons[format] || '📱';
+    }
+
+    function showPostDetails(post) {
+        const modal = document.getElementById('post-modal');
+        const content = document.getElementById('modal-content');
+        
+        let mediaPreview = '';
+        if (post.media_type === 'IMAGE') {
+            mediaPreview = `<img src="${post.media_url}" alt="Post preview">`;
+        } else if (post.media_type === 'VIDEO') {
+            mediaPreview = `
+                <video controls>
+                    <source src="${post.media_url}" type="video/mp4">
+                    Ihr Browser unterstützt das Video-Tag nicht.
+                </video>
+            `;
+        }
+
+        content.innerHTML = `
+            <h2>${post.format_name}</h2>
+            <div class="post-preview">
+                ${mediaPreview}
+            </div>
+            <div class="post-details">
+                <p><strong>Zeitpunkt:</strong> ${post.timestamp}</p>
+                <p><strong>Bildunterschrift:</strong> ${post.caption}</p>
+            </div>
+        `;
+
+        modal.style.display = 'block';
+    }
+
+    // Close modal when clicking the X or outside the modal
+    document.querySelector('.close').onclick = function() {
+        document.getElementById('post-modal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('post-modal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Calendar navigation
+    function changeMonth(value) {
+        const [year, month] = value.split('-');
+        generateCalendar(parseInt(year), parseInt(month) - 1);
+    }
+
+    function previousMonth() {
+        const picker = document.getElementById('month-picker');
+        const [year, month] = picker.value.split('-');
+        const date = new Date(year, month - 2);
+        picker.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        changeMonth(picker.value);
+    }
+
+    function nextMonth() {
+        const picker = document.getElementById('month-picker');
+        const [year, month] = picker.value.split('-');
+        const date = new Date(year, month);
+        picker.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        changeMonth(picker.value);
+    }
+
+    // Initialize calendar
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        generateCalendar(today.getFullYear(), today.getMonth());
+    });
+</script>
+{% endblock %}

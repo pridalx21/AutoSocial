@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Post</title>
+</head>
+<body>
+    <h1>Generate a Post</h1>
+    <form method="POST">
+        <label for="prompt">Enter your post prompt:</label>
+        <textarea id="prompt" name="prompt" required></textarea>
+        <button type="submit">Generate Post</button>
+    </form>
+
+    {% if generated_post %}
+        <h2>Generated Post:</h2>
+        <p>{{ generated_post }}</p>
+    {% endif %}
+
+    {% if error %}
+        <h2>Error:</h2>
+        <p>{{ error }}</p>
+    {% endif %}
+</body>
+<form method="POST">
+    <label for="prompt">Enter your post prompt:</label>
+    <textarea id="prompt" name="prompt" required></textarea>
+    <button type="submit">Generate Post</button>
+</form>
+
+{% if generated_post %}
+    <h2>Generated Post:</h2>
+    <p>{{ generated_post }}</p>
+{% endif %}
+</html>

@@ -5,191 +5,276 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram Manager</title>
     <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --accent-color: #7a5af8;
+            --border-color: #e0e0e0;
+            --gradient: linear-gradient(90deg, #6c5ce7, #7a5af8);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #fafafa;
+            background-color: #f8f5ff;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 40px;
+        .hero-section {
+            background: var(--gradient);
+            padding: 80px 0;
+            color: white;
             text-align: center;
-            max-width: 400px;
-            width: 90%;
+            margin-bottom: 60px;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
         }
 
-        h1 {
-            color: #262626;
-            font-size: 24px;
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: bold;
             margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease;
         }
 
-        .subtitle {
-            color: #8e8e8e;
-            font-size: 16px;
+        .hero-subtitle {
+            font-size: 20px;
+            opacity: 0.9;
             margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease;
         }
 
-        .messages {
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: var(--primary-color);
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .features-section {
+            padding: 60px 0;
+            background: #f8f5ff;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(78, 0, 131, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 48px;
             margin-bottom: 20px;
+            color: var(--primary-color);
         }
 
-        .alert {
-            padding: 12px;
-            border-radius: 4px;
+        .feature-title {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .demo-section {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .demo-title {
+            font-size: 36px;
+            color: var(--primary-color);
+            margin-bottom: 40px;
+            animation: fadeInUp 1.4s ease;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(78, 0, 131, 0.1);
+            transition: all 0.3s ease;
+            animation: fadeInUp 1.6s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(78, 0, 131, 0.2);
+        }
+
+        .demo-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .demo-content {
+            padding: 20px;
+        }
+
+        .demo-card-title {
+            font-size: 20px;
+            color: var(--primary-color);
             margin-bottom: 10px;
         }
 
-        .alert-error {
-            background-color: #ffebee;
-            color: #c62828;
+        .demo-description {
+            color: #666;
+            margin-bottom: 20px;
         }
 
-        .alert-success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .login-button {
-            background-color: #0095f6;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
+        .demo-link {
+            display: inline-block;
+            color: var(--primary-color);
+            text-decoration: none;
             font-weight: 600;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-            width: 100%;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease;
         }
 
-        .login-button:hover {
-            background-color: #0081d6;
+        .demo-link:hover {
+            color: var(--accent-color);
         }
 
-        .loading {
-            display: none;
-            margin-top: 20px;
-            color: #8e8e8e;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .loading.visible {
-            display: block;
-        }
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 36px;
+            }
 
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #0095f6;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
-        }
+            .hero-subtitle {
+                font-size: 18px;
+            }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            .features-grid,
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="fb-root"></div>
-    <script>
-        window.fbAsyncInit = function() {
-            FB.init({
-                appId: '1558999001389004',
-                cookie: true,
-                xfbml: true,
-                version: 'v18.0',
-                status: true
-            });
-        };
-
-        // Load the SDK asynchronously
-        (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/de_DE/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-
-        function showLoading() {
-            document.querySelector('.loading').classList.add('visible');
-            document.querySelector('.login-button').disabled = true;
-        }
-
-        function hideLoading() {
-            document.querySelector('.loading').classList.remove('visible');
-            document.querySelector('.login-button').disabled = false;
-        }
-
-        function handleLoginError(error) {
-            console.error('Login error:', error);
-            hideLoading();
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-error';
-            errorDiv.textContent = 'Es gab ein Problem bei der Anmeldung. Bitte versuchen Sie es erneut.';
-            document.querySelector('.messages').appendChild(errorDiv);
-        }
-
-        function loginWithFacebook() {
-            showLoading();
-            
-            FB.login(function(response) {
-                if (response.status === 'connected') {
-                    // Erfolgreiche Anmeldung
-                    const redirectUri = 'https://instaapp-crnu.onrender.com/auth/facebook/callback';
-                    window.location.href = redirectUri + '?access_token=' + response.authResponse.accessToken;
-                } else if (response.status === 'not_authorized') {
-                    handleLoginError('App nicht autorisiert');
-                } else {
-                    handleLoginError('Nicht bei Facebook angemeldet');
-                }
-            }, {
-                scope: 'instagram_basic',
-                auth_type: 'rerequest',
-                return_scopes: true
-            });
-        }
-    </script>
-
-    <div class="container">
-        <h1>Instagram Manager</h1>
-        <p class="subtitle">Verbinden Sie Ihr Instagram-Konto über Facebook</p>
-
-        <div class="messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Instagram Post Manager</h1>
+            <p class="hero-subtitle">Plane und verwalte deine Instagram-Posts einfach und effizient</p>
+            <a href="{{ url_for('scheduler') }}" class="cta-button">Jetzt Posts planen</a>
         </div>
+    </section>
 
-        <div class="login-section">
-            <button onclick="window.location.href='/auth/facebook'" class="login-button">
-                Mit Facebook verbinden
-            </button>
+    <section class="features-section">
+        <div class="features-grid">
+            <a href="{{ url_for('scheduler') }}" class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3 class="feature-title">Post-Planer</h3>
+                <p class="feature-description">Plane deine Posts im Voraus und veröffentliche sie automatisch zum perfekten Zeitpunkt.</p>
+            </a>
+            <a href="{{ url_for('analytics') }}" class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Analytics</h3>
+                <p class="feature-description">Verfolge die Performance deiner Posts und optimiere deine Content-Strategie.</p>
+            </a>
+            <a href="{{ url_for('targeting') }}" class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">Targeting</h3>
+                <p class="feature-description">Erreiche die richtige Zielgruppe mit optimierten Hashtags und Posting-Zeiten.</p>
+            </a>
         </div>
+    </section>
 
-        <div class="loading">
-            <div class="spinner"></div>
-            <p>Verbindung wird hergestellt...</p>
+    <section class="demo-section">
+        <h2 class="demo-title">Wie es funktioniert</h2>
+        <div class="demo-grid">
+            <div class="demo-card">
+                <img src="https://via.placeholder.com/400x200" alt="Schritt 1" class="demo-image">
+                <div class="demo-content">
+                    <h3 class="demo-card-title">1. Medien hochladen</h3>
+                    <p class="demo-description">Wähle deine Bilder oder Videos aus und lade sie hoch.</p>
+                    <a href="#" class="demo-link">Mehr erfahren →</a>
+                </div>
+            </div>
+            <div class="demo-card">
+                <img src="https://via.placeholder.com/400x200" alt="Schritt 2" class="demo-image">
+                <div class="demo-content">
+                    <h3 class="demo-card-title">2. Zeit planen</h3>
+                    <p class="demo-description">Wähle den perfekten Zeitpunkt für deine Posts.</p>
+                    <a href="#" class="demo-link">Mehr erfahren →</a>
+                </div>
+            </div>
+            <div class="demo-card">
+                <img src="https://via.placeholder.com/400x200" alt="Schritt 3" class="demo-image">
+                <div class="demo-content">
+                    <h3 class="demo-card-title">3. Automatisch posten</h3>
+                    <p class="demo-description">Lehne dich zurück und lass die App für dich arbeiten.</p>
+                    <a href="#" class="demo-link">Mehr erfahren →</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <a href="{{ url_for('data_deletion') }}" class="footer-link">Datenlöschung</a>
+            <a href="{{ url_for('privacy_policy') }}" class="footer-link">Datenschutz</a>
+            <a href="{{ url_for('terms') }}" class="footer-link">Nutzungsbedingungen</a>
+        </div>
+    </footer>
 </body>
 </html>

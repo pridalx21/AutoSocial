@@ -1,311 +1,487 @@
-import os
-from dotenv import load_dotenv
-import requests
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, jsonify
-from datetime import datetime
-import json
-from werkzeug.utils import secure_filename
+import base64
+from datetime import datetime, timedelta
 from functools import wraps
+import io
+import json
+import logging
+import os
+import os
+import os
+import secrets
+import time
+import time
+import time
 
-# Load environment variables
+from PIL import Image
+from dotenv import load_dotenv
+from dotenv import load_dotenv
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    session,
+    url_for,
+)
+from openai import RateLimitError
+from openai import RateLimitError
+from openai import RateLimitError
+from werkzeug.utils import secure_filename
+
+from transformers import pipeline
+
+# Load environment variables from .env file
+load_dotenv()
+print("OpenAI API Key:", os.getenv('OPENAI_API_KEY'))
+
+
+
+
+# Load environment variables from .env file
 load_dotenv()
 
-# Settings file path
-SETTINGS_FILE = 'settings.json'
-
-def load_settings():
-    try:
-        with open(SETTINGS_FILE, 'r') as f:
-            settings = json.load(f)
-            return settings
-    except FileNotFoundError:
-        print("No settings file found, using defaults")
-        return {
-            'INSTAGRAM_CLIENT_ID': '1672953986597793',
-            'INSTAGRAM_CLIENT_SECRET': '934169c5c167aa3bf82c02b099af5745',
-            'INSTAGRAM_REDIRECT_URI': 'http://localhost:5000/auth/instagram/callback',
-            'FACEBOOK_APP_ID': 'your_facebook_app_id',
-            'FACEBOOK_APP_SECRET': 'your_facebook_app_secret',
-            'FACEBOOK_REDIRECT_URI': 'https://instaapp.onrender.com/auth/facebook/callback'
-        }
-    except Exception as e:
-        print(f"Error loading settings: {e}")
-        return {}
-
-def save_settings_to_file(settings):
-    print(f"Saving settings to file: {settings}")
-    with open(SETTINGS_FILE, 'w') as f:
-        json.dump(settings, f)
-    print("Settings saved successfully")
-
-def get_instagram_settings():
-    settings = load_settings()
-    print("Debug - Instagram Settings:")
-    print(f"Client ID: {settings['INSTAGRAM_CLIENT_ID']}")
-    print(f"Redirect URI: {settings['INSTAGRAM_REDIRECT_URI']}")
-    return settings
-
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'dev_key_123')  # Sicherer Secret Key für Sessions
+app.secret_key = secrets.token_hex(32)  # Generate a secure random key
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # Session expires after 1 day
+app.config['DEBUG'] = False  # Disable debug mode in production
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size for videos
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+
+# Create upload folder if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Logging konfigurieren
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # File Upload Configuration
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi'}
+ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'm4a'}
 
-# Create uploads folder if it doesn't exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+def allowed_file(filename, filetype):
+    if not filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    if filetype == 'image':
+        return ext in ALLOWED_IMAGE_EXTENSIONS
+    elif filetype == 'video':
+        return ext in ALLOWED_VIDEO_EXTENSIONS
+    elif filetype == 'audio':
+        return ext in ALLOWED_AUDIO_EXTENSIONS
+    return False
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Post Configuration
+POST_FORMATS = {
+    'feed': {
+        'name': 'Feed Post',
+        'allowed_media': ['image', 'video'],
+        'max_duration': 60, # seconds for video
+        'aspect_ratios': ['1:1', '4:5', '16:9']
+    },
+    'reel': {
+        'name': 'Reel',
+        'allowed_media': ['video'],
+        'max_duration': 90, # seconds
+        'aspect_ratio': '9:16'
+    },
+    'story': {
+        'name': 'Story',
+        'allowed_media': ['image', 'video'],
+        'max_duration': 15, # seconds for video
+        'aspect_ratio': '9:16'
+    },
+    'carousel': {
+        'name': 'Carousel',
+        'allowed_media': ['image', 'video'],
+        'max_items': 10,
+        'aspect_ratios': ['1:1', '4:5', '16:9']
+    }
+}
+
+# Fake user profile for testing
+FAKE_PROFILE = {
+    'username': 'test_user',
+    'full_name': 'Test User',
+    'profile_picture_url': 'https://via.placeholder.com/150',
+    'bio': 'This is a test profile for local development',
+    'media_count': 0,
+    'media': {'data': []}
+}
+
+def validate_schedule_time(schedule_time):
+    try:
+        schedule_dt = datetime.fromisoformat(schedule_time)
+        now = datetime.now()
+        if schedule_dt <= now:
+            return False, "Schedule time must be in the future"
+        if schedule_dt > now + timedelta(days=30):
+            return False, "Cannot schedule posts more than 30 days in advance"
+        return True, None
+    except ValueError:
+        return False, "Invalid datetime format"
+
+def calculate_statistics(posts):
+    now = datetime.now()
+    stats = {
+        'total_posts': len(posts),
+        'scheduled_posts': 0,
+        'posts_this_month': 0,
+        'posts_by_format': {
+            'feed': 0,
+            'reel': 0,
+            'story': 0,
+            'carousel': 0
+        },
+        'posts_by_type': {
+            'IMAGE': 0,
+            'VIDEO': 0
+        },
+        'upcoming_posts': [],
+        'most_active_day': None,
+        'posts_by_weekday': {
+            'Montag': 0, 'Dienstag': 0, 'Mittwoch': 0,
+            'Donnerstag': 0, 'Freitag': 0, 'Samstag': 0, 'Sonntag': 0
+        }
+    }
+
+    if not posts:
+        return stats
+
+    # Posts by date for finding most active day
+    posts_by_date = {}
+    weekday_names = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+
+    for post in posts:
+        post_time = datetime.fromisoformat(post['timestamp'])
+        
+        # Count scheduled posts
+        if post_time > now:
+            stats['scheduled_posts'] += 1
+            if len(stats['upcoming_posts']) < 5:  # Keep only next 5 upcoming posts
+                stats['upcoming_posts'].append({
+                    'timestamp': post_time,
+                    'format': post['post_format'],
+                    'type': post['media_type']
+                })
+
+        # Count posts this month
+        if post_time.year == now.year and post_time.month == now.month:
+            stats['posts_this_month'] += 1
+
+        # Count by format
+        stats['posts_by_format'][post['post_format']] += 1
+
+        # Count by type
+        stats['posts_by_type'][post['media_type']] += 1
+
+        # Track posts by date for most active day
+        date_key = post_time.date()
+        posts_by_date[date_key] = posts_by_date.get(date_key, 0) + 1
+
+        # Count posts by weekday
+        weekday_name = weekday_names[post_time.weekday()]
+        stats['posts_by_weekday'][weekday_name] += 1
+
+    # Find most active day
+    if posts_by_date:
+        most_active_date = max(posts_by_date.items(), key=lambda x: x[1])[0]
+        stats['most_active_day'] = {
+            'date': most_active_date.strftime('%d.%m.%Y'),
+            'count': posts_by_date[most_active_date]
+        }
+
+    # Sort upcoming posts by date
+    stats['upcoming_posts'].sort(key=lambda x: x['timestamp'])
+
+    return stats
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_info' not in session:
+            flash('Bitte melden Sie sich zuerst an', 'error')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Funktion zur Generierung von Inhalten mit Hugging Face
+
+def generate_content_with_huggingface(prompt):
+    generator = pipeline('text-generation', model='gpt2')  # Beispielmodell, ersetze es durch das gewünschte Modell
+    try:
+        response = generator(prompt, max_length=100, num_return_sequences=1)
+        return response[0]['generated_text']
+    except Exception as e:
+        print(f'Error generating content: {e}')
+        return None
+
+@app.route('/generate_post', methods=['GET', 'POST'])
+def generate_post_function():
+    if request.method == 'POST':
+        prompt = request.form.get('prompt')
+        
+        for attempt in range(10):  # Try 3 times
+            try:
+                response = generate_content_with_huggingface(prompt)
+                generated_post = response
+                return render_template('generate_post.html', generated_post=generated_post)
+            except Exception as e:
+                return render_template('generate_post.html', error=f"An error occurred: {str(e)}")
+    
+    return render_template('generate_post.html')
 
 @app.route('/')
 def index():
+    if 'user_info' not in session:
+        session['user_info'] = FAKE_PROFILE.copy()
     return render_template('index.html')
 
+@app.route('/dashboard')
+def dashboard():
+    user_info = session.get('user_info', FAKE_PROFILE.copy())
+    posts = user_info.get('media', {}).get('data', [])
+    
+    # Calculate statistics
+    statistics = calculate_statistics(posts)
+    
+    # Pass statistics to the template
+    return render_template('dashboard.html', statistics=statistics)
+
 @app.route('/scheduler')
+@login_required
 def scheduler():
     return render_template('scheduler.html')
 
 @app.route('/schedule_posts', methods=['POST'])
 def schedule_posts():
     try:
+        if 'user_info' not in session:
+            flash('Bitte melden Sie sich zuerst an', 'error')
+            return redirect(url_for('index'))
+
+        # Ensure upload directory exists
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
         captions = request.form.getlist('captions[]')
         schedules = request.form.getlist('schedules[]')
-        images = request.files.getlist('images[]')
-        
-        for caption, schedule, image in zip(captions, schedules, images):
-            # Validate and save each post
-            if not caption or not schedule or not image:
-                flash('Alle Felder müssen ausgefüllt sein', 'error')
-                return redirect(url_for('scheduler'))
-                
-            # Save image and create database entry for each post
-            # [Your existing logic for saving posts]
-            
-        flash(f'{len(captions)} Beiträge wurden erfolgreich geplant', 'success')
-        return redirect(url_for('index'))
-        
+        post_types = request.form.getlist('post_types[]')
+        post_formats = request.form.getlist('post_formats[]')
+        media_files = request.files.getlist('media[]')
+        audio_files = request.files.getlist('audio[]')
+
+        if not all([captions, schedules, post_types, post_formats, media_files]):
+            flash('Bitte füllen Sie alle erforderlichen Felder aus', 'error')
+            return redirect(url_for('scheduler'))
+
+        if len(captions) != len(schedules) or len(captions) != len(media_files) or len(captions) != len(post_types):
+            flash('Ungültige Anzahl von Medien, Bildunterschriften oder Zeitpunkten', 'error')
+            return redirect(url_for('scheduler'))
+
+        user_info = session.get('user_info', FAKE_PROFILE.copy())
+        if 'media' not in user_info:
+            user_info['media'] = {'data': []}
+
+        successful_posts = 0
+        for caption, schedule, post_type, post_format, media_file, audio_file in zip(captions, schedules, post_types, post_formats, media_files, audio_files):
+            try:
+                # Validate schedule time
+                schedule_dt = datetime.fromisoformat(schedule)
+                now = datetime.now()
+                if schedule_dt <= now:
+                    flash(f'Zeitpunkt muss in der Zukunft liegen: {schedule}', 'error')
+                    continue
+
+                # Validate post format and media type combination
+                if post_format not in POST_FORMATS:
+                    flash(f'Ungültiges Post-Format: {post_format}', 'error')
+                    continue
+
+                format_config = POST_FORMATS[post_format]
+                if post_type not in format_config['allowed_media']:
+                    flash(f'{format_config["name"]} unterstützt keine {post_type}-Dateien', 'error')
+                    continue
+
+                # Validate and save media file
+                if not media_file or not allowed_file(media_file.filename, post_type):
+                    allowed_types = {
+                        'image': ', '.join(ALLOWED_IMAGE_EXTENSIONS),
+                        'video': ', '.join(ALLOWED_VIDEO_EXTENSIONS)
+                    }
+                    flash(f'Ungültiges Dateiformat für {post_type}. Erlaubte Formate: {allowed_types.get(post_type)}', 'error')
+                    continue
+
+                # Save media file
+                if media_file and media_file.filename:
+                    media_filename = secure_filename(media_file.filename)
+                    media_filepath = os.path.join(app.config['UPLOAD_FOLDER'], media_filename)
+                    try:
+                        media_file.save(media_filepath)
+                    except Exception as e:
+                        logger.error(f'Fehler beim Speichern der Mediendatei: {str(e)}')
+                        flash(f'Fehler beim Speichern der Mediendatei: {media_file.filename}', 'error')
+                        continue
+
+                # Handle audio file if present
+                audio_url = None
+                if audio_file and audio_file.filename:
+                    if not allowed_file(audio_file.filename, 'audio'):
+                        flash(f'Ungültiges Audio-Format. Erlaubte Formate: {", ".join(ALLOWED_AUDIO_EXTENSIONS)}', 'error')
+                        continue
+                    
+                    audio_filename = secure_filename(audio_file.filename)
+                    audio_filepath = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
+                    try:
+                        audio_file.save(audio_filepath)
+                        audio_url = url_for('static', filename=f'uploads/{audio_filename}')
+                    except Exception as e:
+                        logger.error(f'Fehler beim Speichern der Audiodatei: {str(e)}')
+                        flash(f'Fehler beim Speichern der Audiodatei: {audio_file.filename}', 'error')
+                        continue
+
+                # Add to user media
+                new_post = {
+                    'id': str(len(user_info['media']['data']) + 1),
+                    'caption': caption,
+                    'media_type': post_type.upper(),
+                    'post_format': post_format,
+                    'media_url': url_for('static', filename=f'uploads/{media_filename}'),
+                    'thumbnail_url': url_for('static', filename=f'uploads/{media_filename}'),
+                    'audio_url': audio_url,
+                    'permalink': '#',
+                    'timestamp': schedule
+                }
+
+                user_info['media']['data'].append(new_post)
+                successful_posts += 1
+
+            except Exception as e:
+                logger.error(f'Fehler beim Verarbeiten des Posts: {str(e)}')
+                flash(f'Fehler beim Verarbeiten eines Posts: {str(e)}', 'error')
+                continue
+
+        if successful_posts > 0:
+            user_info['media_count'] = len(user_info['media']['data'])
+            session['user_info'] = user_info
+            flash(f'{successful_posts} {"Post wurde" if successful_posts == 1 else "Posts wurden"} erfolgreich geplant', 'success')
+        else:
+            flash('Keine Posts konnten geplant werden', 'error')
+
+        return redirect(url_for('dashboard'))
+
     except Exception as e:
-        flash(f'Fehler beim Planen der Beiträge: {str(e)}', 'error')
+        logger.error(f'Fehler beim Planen der Posts: {str(e)}')
+        flash(f'Fehler beim Planen der Posts: {str(e)}', 'error')
         return redirect(url_for('scheduler'))
 
 @app.route('/schedule_post', methods=['POST'])
 def schedule_post():
-    if 'image' not in request.files:
-        flash('Kein Bild hochgeladen', 'error')
+    try:
+        logger.debug('Received schedule_post request')
+        logger.debug(f'Form data: {request.form}')
+        logger.debug(f'Files: {request.files}')
+        
+        if 'image' not in request.files:
+            flash('Kein Bild hochgeladen', 'error')
+            return redirect(url_for('scheduler'))
+
+        file = request.files['image']
+        if file.filename == '':
+            flash('Keine Datei ausgewählt', 'error')
+            return redirect(url_for('scheduler'))
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            logger.debug(f'Saving image to: {filepath}')
+            file.save(filepath)
+            
+            if 'user_info' not in session:
+                session['user_info'] = FAKE_PROFILE.copy()
+            user_info = session['user_info']
+            
+            # Initialisiere media Dictionary falls es noch nicht existiert
+            if 'media' not in user_info:
+                user_info['media'] = {'data': []}
+            
+            caption = request.form.get('caption', '')
+            schedule_time = request.form.get('schedule')
+            
+            # Validate schedule time
+            is_valid, error_msg = validate_schedule_time(schedule_time)
+            if not is_valid:
+                flash(error_msg, 'error')
+                return redirect(url_for('scheduler'))
+            
+            new_post = {
+                'id': str(len(user_info['media']['data']) + 1),
+                'caption': caption,
+                'media_type': 'IMAGE',
+                'media_url': url_for('static', filename=f'uploads/{filename}'),
+                'thumbnail_url': url_for('static', filename=f'uploads/{filename}'),
+                'permalink': '#',
+                'timestamp': schedule_time
+            }
+            
+            user_info['media']['data'].append(new_post)
+            user_info['media_count'] = len(user_info['media']['data'])
+            session['user_info'] = user_info
+            logger.debug('Post added to user_info')
+
+            flash('Beitrag erfolgreich geplant!', 'success')
+            return redirect(url_for('dashboard'))
+
+        flash('Ungültiger Dateityp', 'error')
+        return redirect(url_for('scheduler'))
+        
+    except Exception as e:
+        logger.error(f'Error in schedule_post: {str(e)}', exc_info=True)
+        flash(f'Fehler beim Planen des Beitrags: {str(e)}', 'error')
         return redirect(url_for('scheduler'))
 
-    file = request.files['image']
-    if file.filename == '':
-        flash('Keine Datei ausgewählt', 'error')
-        return redirect(url_for('scheduler'))
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('Username and password are required', 'error')
+            return redirect(url_for('index'))
+            
+        # For demo purposes, using fake profile
+        # In production, this should validate against a secure database
+        if username == 'test_user':
+            session['user_info'] = FAKE_PROFILE.copy()
+            flash('Successfully logged in', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid credentials', 'error')
+            return redirect(url_for('index'))
+            
+    return render_template('login.html')
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Sie wurden erfolgreich abgemeldet', 'success')
+    return redirect(url_for('login'))
 
-        caption = request.form.get('caption', '')
-        schedule_time = request.form.get('schedule')
-
-        flash('Beitrag erfolgreich geplant!', 'success')
-        return redirect(url_for('scheduler'))
-
-    flash('Ungültiger Dateityp', 'error')
+@app.errorhandler(413)
+def too_large(e):
+    flash('File is too large. Maximum size is 100MB.', 'error')
     return redirect(url_for('scheduler'))
 
-@app.route('/auth/instagram')
-def instagram_auth():
-    settings = get_instagram_settings()
-    
-    # Basic Display API Berechtigungen
-    scopes = 'basic'  # Grundlegende Berechtigung für Basic Display API
-    
-    # Instagram OAuth URL für Basic Display API
-    auth_url = 'https://api.instagram.com/oauth/authorize'
-    params = {
-        'client_id': settings['INSTAGRAM_CLIENT_ID'],
-        'redirect_uri': settings['INSTAGRAM_REDIRECT_URI'],
-        'scope': scopes,
-        'response_type': 'code',
-        'state': 'instagram_auth'  # Sicherheitstoken
-    }
-    
-    # Erstelle die vollständige Auth URL
-    full_auth_url = f"{auth_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
-    print(f"Auth URL: {full_auth_url}")  # Debug-Ausgabe
-    return redirect(full_auth_url)
-
-@app.route('/auth/instagram/callback')
-def instagram_callback():
-    try:
-        code = request.args.get('code')
-        if not code:
-            flash('Fehlender Autorisierungscode', 'error')
-            return redirect(url_for('index'))
-
-        settings = get_instagram_settings()
-        print(f"Received code: {code}")  # Debug-Ausgabe
-        
-        # Token von Instagram Basic Display API erhalten
-        token_url = 'https://api.instagram.com/oauth/access_token'
-        token_data = {
-            'client_id': settings['INSTAGRAM_CLIENT_ID'],
-            'client_secret': settings['INSTAGRAM_CLIENT_SECRET'],
-            'grant_type': 'authorization_code',
-            'redirect_uri': settings['INSTAGRAM_REDIRECT_URI'],
-            'code': code
-        }
-        
-        print(f"Token request data: {token_data}")  # Debug-Ausgabe
-        token_response = requests.post(token_url, data=token_data)
-        print(f"Token response: {token_response.text}")  # Debug-Ausgabe
-        token_response.raise_for_status()
-        
-        # Access Token und User ID extrahieren
-        token_data = token_response.json()
-        access_token = token_data.get('access_token')
-        user_id = token_data.get('user_id')
-        
-        if not access_token or not user_id:
-            raise Exception("Kein Access Token oder User ID erhalten")
-        
-        # Token in Session speichern
-        session['instagram_access_token'] = access_token
-        session['instagram_user_id'] = user_id
-        
-        flash('Erfolgreich mit Instagram verbunden!', 'success')
-        return redirect(url_for('dashboard'))
-
-    except Exception as e:
-        print(f"Error in callback: {str(e)}")
-        flash(f'Fehler bei der Authentifizierung: {str(e)}', 'error')
-        return redirect(url_for('index'))
-
-def generate_appsecret_proof(access_token):
-    import hmac
-    import hashlib
-    import time
-    
-    app_secret = os.getenv('FACEBOOK_APP_SECRET')
-    timestamp = int(time.time())
-    hmac_object = hmac.new(
-        app_secret.encode('utf-8'),
-        msg=f'{access_token}|{timestamp}'.encode('utf-8'),
-        digestmod=hashlib.sha256
-    )
-    return hmac_object.hexdigest(), timestamp
-
-@app.route('/auth/facebook')
-def facebook_login():
-    # Facebook Login URL mit den erforderlichen Berechtigungen
-    settings = load_settings()
-    fb_login_url = "https://www.facebook.com/v18.0/dialog/oauth"
-    params = {
-        'client_id': settings['FACEBOOK_APP_ID'],
-        'redirect_uri': settings['FACEBOOK_REDIRECT_URI'],
-        'scope': 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement',
-        'response_type': 'code'
-    }
-    
-    # Erstelle die vollständige Auth URL
-    full_auth_url = f"{fb_login_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
-    return redirect(full_auth_url)
-
-@app.route('/auth/facebook/callback')
-def facebook_callback():
-    settings = load_settings()
-    # Hole den Auth Code aus den URL-Parametern
-    code = request.args.get('code')
-    if not code:
-        flash('Fehler bei der Authentifizierung: Kein Code erhalten', 'error')
-        return redirect(url_for('index'))
-    
-    # Tausche den Code gegen ein Access Token
-    try:
-        token_url = 'https://graph.facebook.com/v18.0/oauth/access_token'
-        token_params = {
-            'client_id': settings['FACEBOOK_APP_ID'],
-            'client_secret': settings['FACEBOOK_APP_SECRET'],
-            'redirect_uri': settings['FACEBOOK_REDIRECT_URI'],
-            'code': code
-        }
-        
-        response = requests.get(token_url, params=token_params)
-        response.raise_for_status()
-        token_data = response.json()
-        access_token = token_data.get('access_token')
-        
-        if not access_token:
-            raise Exception('Kein Access Token in der Antwort')
-            
-        # Hole Benutzerinformationen
-        user_url = 'https://graph.facebook.com/v18.0/me'
-        user_params = {
-            'access_token': access_token,
-            'fields': 'id,name,accounts{instagram_business_account}'
-        }
-        
-        user_response = requests.get(user_url, params=user_params)
-        user_response.raise_for_status()
-        user_data = user_response.json()
-        
-        # Speichere wichtige Daten in der Session
-        session['user_id'] = user_data.get('id')
-        session['access_token'] = access_token
-        
-        # Hole Instagram Business Account ID
-        accounts = user_data.get('accounts', {}).get('data', [])
-        for account in accounts:
-            if account.get('instagram_business_account'):
-                session['instagram_business_account_id'] = account['instagram_business_account']['id']
-                break
-        
-        return render_template('facebook_callback.html')
-        
-    except Exception as e:
-        flash(f'Fehler bei der Authentifizierung: {str(e)}', 'error')
-        return redirect(url_for('index'))
-
-@app.route('/dashboard')
-def dashboard():
-    if 'page_access_token' not in session or 'instagram_account_id' not in session:
-        flash('Bitte melden Sie sich zuerst an', 'error')
-        return redirect(url_for('index'))
-    
-    try:
-        # Instagram Business Account Informationen abrufen
-        account_url = f"https://graph.facebook.com/v18.0/{session['instagram_account_id']}"
-        params = {
-            'fields': 'username,profile_picture_url,media_count,media{caption,media_url,thumbnail_url,permalink,media_type,timestamp}',
-            'access_token': session['page_access_token']
-        }
-        
-        response = requests.get(account_url, params=params)
-        response.raise_for_status()
-        account_info = response.json()
-        
-        # Media-Daten extrahieren
-        media = account_info.get('media', {}).get('data', [])
-        
-        return render_template('dashboard.html', 
-                             user_info={
-                                 'username': account_info.get('username'),
-                                 'profile_picture_url': account_info.get('profile_picture_url'),
-                                 'media_count': account_info.get('media_count')
-                             },
-                             media=media)
-        
-    except Exception as e:
-        flash(f'Fehler beim Laden der Account-Informationen: {str(e)}', 'error')
-        return redirect(url_for('index'))
-
-@app.route('/login')
-def login():
-    return render_template('facebook_login.html')
+@app.errorhandler(500)
+def internal_error(e):
+    logger.error(f'Internal Server Error: {str(e)}')
+    flash('An internal error occurred. Please try again later.', 'error')
+    return redirect(url_for('index'))
 
 @app.route('/data-deletion')
 def data_deletion():
@@ -313,42 +489,104 @@ def data_deletion():
 
 @app.route('/privacy-policy')
 def privacy_policy():
-    return render_template('privacy.html')
+    return render_template('privacy-policy.html')
 
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
 
-@app.route('/deauthorize', methods=['POST'])
-def deauthorize():
+@app.route('/calendar')
+@login_required
+def calendar():
+    user_info = session.get('user_info', FAKE_PROFILE.copy())
+    posts = user_info.get('media', {}).get('data', [])
+    
+    # Group posts by date for calendar view
+    posts_by_date = {}
+    for post in posts:
+        schedule_time = datetime.fromisoformat(post['timestamp'])
+        date_key = schedule_time.date().isoformat()
+        if date_key not in posts_by_date:
+            posts_by_date[date_key] = []
+        posts_by_date[date_key].append({
+            **post,
+            'time': schedule_time.strftime('%H:%M'),
+            'format_name': POST_FORMATS[post['post_format']]['name']
+        })
+
+    return render_template('calendar.html', 
+                         user_info=user_info,
+                         posts_by_date=posts_by_date,
+                         current_month=datetime.now().strftime('%Y-%m'))
+
+@app.route('/analytics')
+@login_required
+def analytics():
+    return render_template('analytics.html')
+
+@app.route('/targeting')
+@login_required
+def targeting():
+    return render_template('targeting.html')
+
+@app.route('/api/generate-content', methods=['POST'])
+@login_required
+def generate_content():
+    data = request.json
+    
     try:
-        # Verarbeite die Deauthorisierung von Instagram
-        signed_request = request.form.get('signed_request')
-        if not signed_request:
-            return jsonify({'error': 'No signed_request parameter'}), 400
-
-        # Hier können Sie den signed_request verarbeiten und die Benutzerinformationen löschen
-        # Für jetzt senden wir einfach eine erfolgreiche Antwort
-        return jsonify({'success': True}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/data-deletion', methods=['POST'])
-def data_deletion_post():
-    try:
-        # Verarbeite die Datenlöschungsanfrage von Instagram
-        signed_request = request.form.get('signed_request')
-        if not signed_request:
-            return jsonify({'error': 'No signed_request parameter'}), 400
-
-        # Hier können Sie den signed_request verarbeiten und die Benutzerdaten löschen
-        # Für jetzt senden wir einfach eine erfolgreiche Antwort
+        # Generate image prompt based on interests and content type
+        image_prompt = generate_image_prompt(data)
+        
+        # Generate image using DALL-E
+        image_response = client.images.generate(
+            model="dall-e-3",
+            prompt=image_prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        
+        # Get the image URL
+        image_url = image_response.data[0].url
+        
+        # Generate caption and hashtags
+        content = generate_text_content(data)
+        
         return jsonify({
-            'url': 'https://instaapp.onrender.com/privacy-policy',
-            'confirmation_code': 'CONFIRMATION_CODE'
-        }), 200
+            'imageUrl': image_url,
+            'caption': content['caption'],
+            'hashtags': content['hashtags']
+        })
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Error generating content: {str(e)}")
+        return jsonify({'error': 'Content generation failed'}), 500
+
+def generate_image_prompt(data):
+    # Create a prompt for DALL-E based on user preferences
+    prompt_template = f"""Create an engaging Instagram-worthy image for a {data['contentType']} post 
+    targeting {data['ageRange']} year olds interested in {', '.join(data['interests'])}.
+    The image should be {data['tone']} in style."""
+    
+    # Get prompt from GPT-4
+    response = generate_content_with_huggingface(prompt_template)
+    
+    return response
+
+def generate_text_content(data):
+    # Create engaging caption and hashtags using GPT-4
+    prompt = f"""Create an Instagram post caption and hashtags for a {data['contentType']} post 
+    targeting {data['ageRange']} year olds interested in {', '.join(data['interests'])}.
+    The tone should be {data['tone']}.
+    
+    Format the response as JSON with two fields:
+    1. caption: The main post text
+    2. hashtags: An array of relevant hashtags (without the # symbol)"""
+    
+    response = generate_content_with_huggingface(prompt)
+    
+    return json.loads(response)
 
 if __name__ == '__main__':
     app.run(debug=True)

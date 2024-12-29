@@ -85,27 +85,41 @@
         }
 
         .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            display: flex;
+            gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
         .action-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
             background: #0095f6;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-            text-align: center;
-            text-decoration: none;
+            font-size: 16px;
             transition: background-color 0.2s;
+            text-decoration: none;
         }
 
         .action-button:hover {
             background: #0081d6;
+        }
+
+        .action-button i {
+            font-size: 20px;
+        }
+
+        .calendar-button {
+            background: #8134af;
+        }
+
+        .calendar-button:hover {
+            background: #6f2c94;
         }
 
         .media-grid {
@@ -156,6 +170,116 @@
             background-color: #e8f5e9;
             color: #2e7d32;
         }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 15px 0;
+            color: #262626;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-card .icon {
+            font-size: 24px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #0095f6;
+            margin: 10px 0;
+        }
+
+        .stat-detail {
+            font-size: 14px;
+            color: #8e8e8e;
+            margin: 5px 0;
+        }
+
+        .stat-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .stat-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-list li:last-child {
+            border-bottom: none;
+        }
+
+        .upcoming-post {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .upcoming-post:last-child {
+            border-bottom: none;
+        }
+
+        .post-format-icon {
+            font-size: 20px;
+        }
+
+        .post-info {
+            flex-grow: 1;
+        }
+
+        .post-time {
+            color: #8e8e8e;
+            font-size: 12px;
+        }
+
+        .weekday-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .weekday-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .bar {
+            width: 20px;
+            background: #0095f6;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.3s;
+        }
+
+        .day-label {
+            font-size: 12px;
+            color: #8e8e8e;
+            transform: rotate(-45deg);
+            transform-origin: top left;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -163,13 +287,26 @@
         <div class="nav-container">
             <a href="{{ url_for('dashboard') }}" class="nav-brand">Instagram Manager</a>
             <div class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-link">Home</a>
                 <a href="{{ url_for('scheduler') }}" class="nav-link">Post planen</a>
-                <a href="{{ url_for('index') }}" class="nav-link">Logout</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
             </div>
         </div>
     </nav>
 
     <main class="main-content">
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <div class="action-buttons">
+                <a href="{{ url_for('scheduler') }}" class="action-button">
+                    <i>📝</i> Neuen Post planen
+                </a>
+                <a href="{{ url_for('calendar') }}" class="action-button calendar-button">
+                    <i>📅</i> Kalenderübersicht
+                </a>
+            </div>
+        </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -192,9 +329,99 @@
             {% endif %}
         </section>
 
-        <section class="action-buttons">
-            <a href="{{ url_for('scheduler') }}" class="action-button">Neuen Post planen</a>
-        </section>
+        <div class="stats-grid">
+            <!-- Gesamtübersicht -->
+            <div class="stat-card">
+                <h3><span class="icon">📊</span> Gesamtübersicht</h3>
+                <div class="stat-number">{{ statistics.total_posts }}</div>
+                <div class="stat-detail">Gesamt Posts</div>
+                <div class="stat-detail">{{ statistics.posts_this_month }} Posts diesen Monat</div>
+                <div class="stat-detail">{{ statistics.scheduled_posts }} geplante Posts</div>
+            </div>
+
+            <!-- Post-Formate -->
+            <div class="stat-card">
+                <h3><span class="icon">📱</span> Post-Formate</h3>
+                <ul class="stat-list">
+                    <li>
+                        <span>Feed Posts</span>
+                        <strong>{{ statistics.posts_by_format.feed }}</strong>
+                    </li>
+                    <li>
+                        <span>Reels</span>
+                        <strong>{{ statistics.posts_by_format.reel }}</strong>
+                    </li>
+                    <li>
+                        <span>Stories</span>
+                        <strong>{{ statistics.posts_by_format.story }}</strong>
+                    </li>
+                    <li>
+                        <span>Carousels</span>
+                        <strong>{{ statistics.posts_by_format.carousel }}</strong>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Medientypen -->
+            <div class="stat-card">
+                <h3><span class="icon">🖼️</span> Medientypen</h3>
+                <ul class="stat-list">
+                    <li>
+                        <span>Bilder</span>
+                        <strong>{{ statistics.posts_by_type.IMAGE }}</strong>
+                    </li>
+                    <li>
+                        <span>Videos</span>
+                        <strong>{{ statistics.posts_by_type.VIDEO }}</strong>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Nächste Posts -->
+            <div class="stat-card">
+                <h3><span class="icon">📅</span> Nächste Posts</h3>
+                {% if statistics.upcoming_posts %}
+                    {% for post in statistics.upcoming_posts %}
+                    <div class="upcoming-post">
+                        <span class="post-format-icon">
+                            {% if post.format == 'feed' %}📱
+                            {% elif post.format == 'reel' %}🎬
+                            {% elif post.format == 'story' %}⭕
+                            {% else %}📑
+                            {% endif %}
+                        </span>
+                        <div class="post-info">
+                            <div>{{ post.type|lower|capitalize }}</div>
+                            <div class="post-time">{{ post.timestamp.strftime('%d.%m.%Y %H:%M') }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="stat-detail">Keine geplanten Posts</div>
+                {% endif %}
+            </div>
+
+            <!-- Aktivste Tage -->
+            <div class="stat-card">
+                <h3><span class="icon">📈</span> Posting-Aktivität</h3>
+                {% if statistics.most_active_day %}
+                    <div class="stat-detail">
+                        Aktivster Tag: {{ statistics.most_active_day.date }}
+                        ({{ statistics.most_active_day.count }} Posts)
+                    </div>
+                {% endif %}
+                <div class="weekday-stats">
+                    {% for day, count in statistics.posts_by_weekday.items() %}
+                    <div class="weekday-bar">
+                        {% set max_count = statistics.posts_by_weekday.values()|max if statistics.posts_by_weekday.values()|max > 0 else 1 %}
+                        {% set height = (count / max_count * 100)|round|int %}
+                        <div class="bar" style="height: {{ height }}px"></div>
+                        <div class="day-label">{{ day[:2] }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
 
         <section class="media-grid">
             {% if media %}
