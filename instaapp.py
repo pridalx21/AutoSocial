@@ -10,17 +10,16 @@ import time
 
 from PIL import Image
 from dotenv import load_dotenv
-from dotenv import load_dotenv
 from flask import (
     Flask,
-    flash,
-    jsonify,
-    redirect,
     render_template,
     request,
-    send_from_directory,
-    session,
+    redirect,
     url_for,
+    flash,
+    session,
+    send_from_directory,
+    jsonify
 )
 from openai import RateLimitError
 from werkzeug.utils import secure_filename
@@ -30,12 +29,6 @@ from transformers import pipeline
 # Load environment variables from .env file
 load_dotenv()
 print("OpenAI API Key:", os.getenv('OPENAI_API_KEY'))
-
-
-
-
-# Load environment variables from .env file
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)  # Generate a secure random key
@@ -52,253 +45,6 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Logging konfigurieren
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-=======
-import os
-from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, jsonify
-from datetime import datetime, timedelta
-import json
-from werkzeug.utils import secure_filename
-import logging
-import secrets
-from functools import wraps
-import requests
-from PIL import Image
-import io
-import base64
-import time
-import random
-from flask_sqlalchemy import SQLAlchemy
-from flask_caching import Cache
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_compress import Compress
-from apscheduler.schedulers.background import BackgroundScheduler
-from dateutil import parser
-from dateutil import parser
-import string
-from urllib.parse import urlencode
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
-
-app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
-
-# App configuration
-app.config.update(
-    SESSION_TYPE='filesystem',
-    SESSION_PERMANENT=False,
-    PERMANENT_SESSION_LIFETIME=timedelta(days=1),
-    MAX_CONTENT_LENGTH=100 * 1024 * 1024,  # 100MB max file size
-    UPLOAD_FOLDER=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads'),
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    TEMPLATES_AUTO_RELOAD=True
-)
-
-# Database configuration
-if os.environ.get('RENDER'):
-    # Production database (PostgreSQL on Render.com)
-    db_url = os.environ.get('DATABASE_URL')
-    if db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-else:
-    # Development database (SQLite)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instaapp.db')
-
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# Initialize extensions
-db = SQLAlchemy(app)
-compress = Compress(app)
-limiter = Limiter(
-    app=app,
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
-)
-
-# Initialize cache with proper configuration for production
-if os.environ.get('RENDER'):
-    cache = Cache(config={
-        'CACHE_TYPE': 'SimpleCache',
-        'CACHE_DEFAULT_TIMEOUT': 300
-    })
-else:
-    cache = Cache(config={
-        'CACHE_TYPE': 'SimpleCache',
-        'CACHE_DEFAULT_TIMEOUT': 300
-    })
-cache.init_app(app)
-
-# Scheduler function to check and publish scheduled posts
-def check_scheduled_posts():
-    with app.app_context():
-        try:
-            # Get all scheduled posts that are due
-            current_time = datetime.now()
-            scheduled_posts = Post.query.filter(
-                Post.scheduled_time <= current_time,
-                Post.status == 'scheduled'
-            ).all()
-
-            for post in scheduled_posts:
-                try:
-                    # Get user info from database
-                    user_info = User.query.get(post.user_id)
-                    if not user_info or not user_info.facebook_token:
-                        app.logger.error(f"No valid token for user {post.user_id}")
-                        continue
-
-                    # Post to Instagram
-                    response = requests.post(
-                        f'https://graph.facebook.com/v19.0/{post.instagram_account_id}/media',
-                        params={
-                            'access_token': user_info.facebook_token,
-                            'image_url': post.media_url,
-                            'caption': post.caption
-                        }
-                    )
-                    
-                    if response.status_code == 200:
-                        creation_id = response.json().get('id')
-                        
-                        # Publish the container
-                        publish_response = requests.post(
-                            f'https://graph.facebook.com/v19.0/{post.instagram_account_id}/media_publish',
-                            params={
-                                'access_token': user_info.facebook_token,
-                                'creation_id': creation_id
-                            }
-                        )
-                        
-                        if publish_response.status_code == 200:
-                            post.status = 'published'
-                            post.published_time = current_time
-                            db.session.commit()
-                            app.logger.info(f"Successfully published post {post.id}")
-                        else:
-                            post.status = 'failed'
-                            post.error_message = f"Publishing failed: {publish_response.text}"
-                            db.session.commit()
-                            app.logger.error(f"Failed to publish post {post.id}: {publish_response.text}")
-                    else:
-                        post.status = 'failed'
-                        post.error_message = f"Media creation failed: {response.text}"
-                        db.session.commit()
-                        app.logger.error(f"Failed to create media for post {post.id}: {response.text}")
-
-                except Exception as e:
-                    post.status = 'failed'
-                    post.error_message = str(e)
-                    db.session.commit()
-                    app.logger.error(f"Error processing post {post.id}: {str(e)}")
-
-        except Exception as e:
-            app.logger.error(f"Scheduler error: {str(e)}")
-
-# Initialize scheduler
-scheduler = BackgroundScheduler(daemon=True)
-scheduler.add_job(check_scheduled_posts, 'interval', minutes=1)
-
-# Base URL configuration
-BASE_URL = 'https://instaapp-cmu.onrender.com' if os.environ.get('RENDER') else 'http://localhost:5000'
-
-# Privacy and Terms URLs
-PRIVACY_POLICY_URL = f'{BASE_URL}/privacy'
-TERMS_URL = f'{BASE_URL}/terms'
-DATA_DELETION_URL = f'{BASE_URL}/data-deletion'
-
-# Database Models
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    posts = db.relationship('Post', backref='author', lazy=True)
-    subscription = db.relationship('Subscription', backref='user', uselist=False)
-    facebook_id = db.Column(db.String(100), nullable=True)
-    facebook_token = db.Column(db.String(200), nullable=True)
-    password_hash = db.Column(db.String(200), nullable=True)
-
-    def __init__(self, username, email, facebook_id=None, password_hash=None):
-        self.username = username
-        self.email = email
-        self.facebook_id = facebook_id
-        self.password_hash = password_hash
-
-    def check_password(self, password):
-        return self.password_hash == password
-
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    image_url = db.Column(db.String(200), nullable=False)
-    caption = db.Column(db.String(200), nullable=False)
-    hashtags = db.Column(db.String(200), nullable=False)
-    scheduled_time = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    instagram_account_id = db.Column(db.String(100), nullable=True)
-    published_time = db.Column(db.DateTime, nullable=True)
-    error_message = db.Column(db.String(200), nullable=True)
-
-    def __init__(self, user_id, image_url, caption, hashtags, scheduled_time, status, instagram_account_id=None):
-        self.user_id = user_id
-        self.image_url = image_url
-        self.caption = caption
-        self.hashtags = hashtags
-        self.scheduled_time = scheduled_time
-        self.status = status
-        self.instagram_account_id = instagram_account_id
-
-class Subscription(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    plan_type = db.Column(db.String(20), nullable=False)  # 'monthly', 'sixmonth', 'yearly'
-    start_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    end_date = db.Column(db.DateTime, nullable=False)
-    active = db.Column(db.Boolean, default=True)
-    price = db.Column(db.Float, nullable=False)
-
-    def __init__(self, user_id, plan_type, price):
-        self.user_id = user_id
-        self.plan_type = plan_type
-        self.price = price
-        self.start_date = datetime.utcnow()
-        
-        # Set end date based on plan type
-        if plan_type == 'monthly':
-            self.end_date = self.start_date + timedelta(days=30)
-        elif plan_type == 'sixmonth':
-            self.end_date = self.start_date + timedelta(days=180)
-        elif plan_type == 'yearly':
-            self.end_date = self.start_date + timedelta(days=365)
-
-# Create tables on startup
-with app.app_context():
-    db.create_all()
-    
-    # Create test user if it doesn't exist
-    test_user = User.query.filter_by(username='testuser').first()
-    if not test_user:
-        test_user = User(username='testuser', email='test@example.com')
-        db.session.add(test_user)
-        db.session.commit()
-        app.logger.info('Test user created successfully!')
-    
-    app.logger.info('Database tables created successfully!')
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 
 # File Upload Configuration
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -501,7 +247,6 @@ def scheduler():
 
 @app.route('/schedule_posts', methods=['POST'])
 @login_required
-@limiter.limit("30 per minute")
 def schedule_posts():
     try:
         if 'user_info' not in session:
@@ -832,5 +577,4 @@ def generate_text_content(data):
     return json.loads(response)
 
 if __name__ == '__main__':
- ##   scheduler.start()
     app.run(debug=True)
