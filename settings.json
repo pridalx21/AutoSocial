@@ -1,8 +1,8 @@
 {
-    "FACEBOOK_APP_ID": "1558999001389004",
-    "FACEBOOK_APP_SECRET": "934169c5c167aa3bf82c02b099af5745",
-    "FACEBOOK_REDIRECT_URI": "https://instaapp.onrender.com/auth/facebook/callback",
+    "FACEBOOK_APP_ID": "1496157011062607",
+    "FACEBOOK_APP_SECRET": "4e99ccb0bdefae3446cb70b6b208aa37",
+    "FACEBOOK_REDIRECT_URI": "https://instaapp-1.onrender.com/auth/facebook/callback",
     "INSTAGRAM_CLIENT_ID": "1558999001389004",
     "INSTAGRAM_CLIENT_SECRET": "934169c5c167aa3bf82c02b099af5745",
-    "INSTAGRAM_REDIRECT_URI": "https://instaapp.onrender.com/auth/instagram/callback"
+    "INSTAGRAM_REDIRECT_URI": "https://instaapp-1.onrender.com/auth/instagram/callback"
 }

@@ -9,6 +9,7 @@
         --gradient: linear-gradient(90deg, #6c5ce7, #7a5af8);
     }
 
+<<<<<<< HEAD
     .targeting-container {
         max-width: 1200px;
         margin: 80px auto 0;
@@ -16,11 +17,24 @@
     }
 
     .targeting-header {
+=======
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .page-header {
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         text-align: center;
         margin-bottom: 50px;
     }
 
+<<<<<<< HEAD
     .targeting-title {
+=======
+    .page-title {
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         font-size: 36px;
         font-weight: bold;
         background: var(--gradient);
@@ -29,11 +43,16 @@
         margin-bottom: 15px;
     }
 
+<<<<<<< HEAD
     .targeting-subtitle {
+=======
+    .page-subtitle {
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         color: #666;
         font-size: 18px;
     }
 
+<<<<<<< HEAD
     .targeting-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -42,18 +61,30 @@
     }
 
     .targeting-card {
+=======
+    .card {
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         background: white;
         border-radius: 15px;
         padding: 30px;
         box-shadow: 0 4px 20px rgba(108, 92, 231, 0.1);
         transition: all 0.3s ease;
+<<<<<<< HEAD
     }
 
     .targeting-card:hover {
+=======
+        border: none;
+        margin-bottom: 30px;
+    }
+
+    .card:hover {
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         transform: translateY(-5px);
         box-shadow: 0 8px 30px rgba(108, 92, 231, 0.2);
     }
 
+<<<<<<< HEAD
     .targeting-section {
         margin-bottom: 30px;
     }
@@ -81,11 +112,86 @@
     }
 
     .hashtag:hover {
+=======
+    .card-title {
+        color: var(--primary-color);
+        font-size: 24px;
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        color: #444;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+    }
+
+    .form-check {
+        margin-bottom: 10px;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: var(--gradient);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(90deg, #2ecc71, #27ae60);
+        border: none;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    }
+
+    .badge {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        background: #f8f9fa;
+        color: #666;
+        margin: 5px;
+        transition: all 0.3s ease;
+    }
+
+    .badge:hover {
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         background: var(--gradient);
         color: white;
         transform: translateY(-2px);
     }
 
+<<<<<<< HEAD
     .time-slot {
         display: flex;
         justify-content: space-between;
@@ -219,11 +325,34 @@
 
     .schedule-button {
         margin-top: 20px;
+=======
+    #generatedImage {
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        color: var(--primary-color);
+    }
+
+    .alert {
+        border-radius: 10px;
+        border: none;
+        padding: 15px 20px;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #dc2626;
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <nav class="navbar">
     <div class="nav-container">
         <a href="{{ url_for('dashboard') }}" class="nav-brand">Instagram Manager</a>
@@ -326,11 +455,123 @@
                 <span class="button-text">Post planen</span>
                 <span class="button-icon">📅</span>
             </button>
+=======
+<div class="container mt-4">
+    <div class="page-header">
+        <h1 class="page-title">Targeting & KI Content</h1>
+        <p class="page-subtitle">Definiere deine Zielgruppe und erstelle automatisch passenden Content</p>
+    </div>
+
+    <div class="row">
+        <!-- Linke Spalte: Zielgruppen-Formular -->
+        <div class="col-md-4">
+            <div class="card">
+                <h2 class="card-title">Zielgruppe definieren</h2>
+                <form id="targetingForm">
+                    <div class="mb-3">
+                        <label for="ageRange" class="form-label">Altersgruppe</label>
+                        <input type="text" class="form-control" id="ageRange" name="ageRange" value="13-17 Jahre" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Interessen (max. 3)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="interests" value="Mode & Beauty" id="mode">
+                            <label class="form-check-label" for="mode">Mode & Beauty</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="interests" value="Fitness & Gesundheit" id="fitness">
+                            <label class="form-check-label" for="fitness">Fitness & Gesundheit</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="interests" value="Reisen & Abenteuer" id="reisen">
+                            <label class="form-check-label" for="reisen">Reisen & Abenteuer</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="interests" value="Essen & Kochen" id="essen">
+                            <label class="form-check-label" for="essen">Essen & Kochen</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="interests" value="Technologie" id="tech">
+                            <label class="form-check-label" for="tech">Technologie</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="interests" value="Business" id="business">
+                            <label class="form-check-label" for="business">Business</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="contentType" class="form-label">Content-Typ</label>
+                        <select class="form-select" id="contentType" name="contentType" required>
+                            <option value="Inspiration">Inspiration</option>
+                            <option value="Education">Education</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Product">Product</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tone" class="form-label">Tonalität</label>
+                        <select class="form-select" id="tone" name="tone" required>
+                            <option value="Motivierend">Motivierend</option>
+                            <option value="Professionell">Professionell</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Humorvoll">Humorvoll</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="generateBtn">
+                        <i class="fas fa-magic me-2"></i>KI Content generieren
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Rechte Spalte: Generierter Content -->
+        <div class="col-md-8">
+            <div id="generatedContent" class="card">
+                <h2 class="card-title">Generierter Content</h2>
+                <div id="loadingSpinner" class="text-center d-none">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Generiere Content...</p>
+                </div>
+                <div id="contentDisplay" class="d-none">
+                    <div class="mb-4">
+                        <img id="generatedImage" src="" alt="Generated Image" class="img-fluid w-100 mb-4">
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="h5 mb-3 text-primary">Caption</h3>
+                        <p id="generatedCaption" class="mb-4 text-dark"></p>
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="h5 mb-3 text-primary">Hashtags</h3>
+                        <div id="generatedHashtags" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success flex-grow-1" id="scheduleButton">
+                            <i class="far fa-calendar-check me-2"></i>Post planen
+                        </button>
+                        <button class="btn btn-primary" id="regenerateButton">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                    <div id="scheduleSuccess" class="alert alert-success mt-3 d-none">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span id="scheduleMessage"></span>
+                    </div>
+                </div>
+                <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
         </div>
     </div>
 </div>
 
 <script>
+<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('target-group-form');
     const interestCheckboxes = document.querySelectorAll('input[name="interests"]');
@@ -399,6 +640,145 @@ document.addEventListener('DOMContentLoaded', function() {
         // Redirect to scheduler with generated content
         window.location.href = '/scheduler';
     });
+=======
+document.getElementById('targetingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // UI-Elemente aktualisieren
+    document.getElementById('loadingSpinner').classList.remove('d-none');
+    document.getElementById('contentDisplay').classList.add('d-none');
+    document.getElementById('errorMessage').classList.add('d-none');
+    document.getElementById('generateBtn').disabled = true;
+    
+    // Interessen sammeln
+    const selectedInterests = Array.from(document.querySelectorAll('input[name="interests"]:checked'))
+        .map(checkbox => checkbox.value);
+    
+    // Request-Daten vorbereiten
+    const data = {
+        ageRange: document.getElementById('ageRange').value,
+        interests: selectedInterests,
+        contentType: document.getElementById('contentType').value,
+        tone: document.getElementById('tone').value
+    };
+    
+    try {
+        const response = await fetch('/api/generate-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Bild anzeigen
+            document.getElementById('generatedImage').src = result.imageUrl;
+            
+            // Caption anzeigen
+            document.getElementById('generatedCaption').textContent = result.caption;
+            
+            // Hashtags anzeigen
+            const hashtagsContainer = document.getElementById('generatedHashtags');
+            hashtagsContainer.innerHTML = '';
+            result.hashtags.forEach(hashtag => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-light text-dark';
+                badge.textContent = `#${hashtag}`;
+                hashtagsContainer.appendChild(badge);
+            });
+            
+            // Content anzeigen
+            document.getElementById('contentDisplay').classList.remove('d-none');
+        } else {
+            throw new Error(result.error || 'Failed to generate content');
+        }
+    } catch (error) {
+        document.getElementById('errorMessage').textContent = error.message;
+        document.getElementById('errorMessage').classList.remove('d-none');
+    } finally {
+        document.getElementById('loadingSpinner').classList.add('d-none');
+        document.getElementById('generateBtn').disabled = false;
+    }
+});
+
+// Maximale Anzahl von Interessen beschränken
+const interestCheckboxes = document.querySelectorAll('input[name="interests"]');
+interestCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const checkedCount = document.querySelectorAll('input[name="interests"]:checked').length;
+        if (checkedCount > 3) {
+            this.checked = false;
+        }
+    });
+});
+
+// Post planen
+document.getElementById('scheduleButton').addEventListener('click', async function() {
+    try {
+        const button = this;
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Plane Post...';
+        
+        const response = await fetch('/api/schedule-post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                imageUrl: document.getElementById('generatedImage').src,
+                caption: document.getElementById('generatedCaption').textContent,
+                hashtags: Array.from(document.getElementById('generatedHashtags').children)
+                    .map(span => span.textContent.substring(1)), // Remove # from hashtags
+                ageRange: document.getElementById('ageRange').value,
+                interests: Array.from(document.querySelectorAll('input[name="interests"]:checked'))
+                    .map(checkbox => checkbox.value)
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Zeige Erfolgsmeldung
+            const successDiv = document.getElementById('scheduleSuccess');
+            const messageSpan = document.getElementById('scheduleMessage');
+            messageSpan.textContent = result.message;
+            successDiv.classList.remove('d-none');
+            
+            // Deaktiviere den Schedule-Button
+            button.classList.remove('btn-success');
+            button.classList.add('btn-secondary');
+            button.innerHTML = '<i class="fas fa-check me-2"></i>Geplant';
+            button.disabled = true;
+        } else {
+            throw new Error(result.error || 'Failed to schedule post');
+        }
+    } catch (error) {
+        document.getElementById('errorMessage').textContent = error.message;
+        document.getElementById('errorMessage').classList.remove('d-none');
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+});
+
+// Content neu generieren
+document.getElementById('regenerateButton').addEventListener('click', async function() {
+    // Verstecke vorherige Erfolgsmeldung
+    document.getElementById('scheduleSuccess').classList.add('d-none');
+    
+    // Aktiviere den Schedule-Button wieder
+    const scheduleButton = document.getElementById('scheduleButton');
+    scheduleButton.classList.remove('btn-secondary');
+    scheduleButton.classList.add('btn-success');
+    scheduleButton.innerHTML = '<i class="far fa-calendar-check me-2"></i>Post planen';
+    scheduleButton.disabled = false;
+    
+    // Generiere neuen Content
+    document.getElementById('targetingForm').dispatchEvent(new Event('submit'));
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 });
 </script>
 {% endblock %}

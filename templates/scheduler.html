@@ -359,7 +359,11 @@
                     + Weiteren Post hinzufügen
                 </button>
 
+<<<<<<< HEAD
                 <button type="submit" class="submit-btn">
+=======
+                <button type="submit" class="submit-btn" onclick="submitPosts()">
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
                     Posts planen
                 </button>
             </form>
@@ -446,6 +450,17 @@
                 option.closest('.post-card').querySelector('input[name="post_format"]').value = format;
             }
 
+<<<<<<< HEAD
+=======
+            function submitPosts() {
+                const form = document.querySelector('form');
+                const formData = new FormData(form);
+                // Hier könnte ein AJAX-Request oder Fetch-API verwendet werden, um die Daten zu senden
+                console.log('Posts geplant:', formData);
+                // Beispiel: fetch('/api/schedule_posts', { method: 'POST', body: formData })
+            }
+
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
             // Preview uploaded media
             document.addEventListener('change', function(e) {
                 if (e.target.matches('input[type="file"]')) {

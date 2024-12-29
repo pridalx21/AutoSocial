@@ -105,6 +105,18 @@
 {% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
+=======
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('dashboard') }}" class="nav-brand">Instagram Manager</a>
+        <div class="nav-menu">
+            <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+        </div>
+    </div>
+</nav>
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 
 <div class="analytics-container">
     <div class="analytics-header">
@@ -144,6 +156,7 @@
         </div>
     </div>
 </div>
+<<<<<<< HEAD
 
 <script>
   window.fbAsyncInit = function() {
@@ -176,4 +189,6 @@
     }
   }
 </script>
+=======
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 {% endblock %}

@@ -215,9 +215,19 @@
                 {% if 'user_info' in session %}
                     <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
                     <a href="{{ url_for('scheduler') }}" class="nav-link {% if request.endpoint == 'scheduler' %}active{% endif %}">Planer</a>
+<<<<<<< HEAD
                     <a href="{{ url_for('calendar') }}" class="nav-link {% if request.endpoint == 'calendar' %}active{% endif %}">Kalender</a>
                     <a href="{{ url_for('logout') }}" class="nav-link">Abmelden</a>
                 {% else %}
+=======
+                    <a href="{{ url_for('scheduled_posts') }}" class="nav-link {% if request.endpoint == 'scheduled_posts' %}active{% endif %}">Geplante Posts</a>
+                    <a href="{{ url_for('analytics') }}" class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}">Analytics</a>
+                    <a href="{{ url_for('targeting') }}" class="nav-link {% if request.endpoint == 'targeting' %}active{% endif %}">Targeting</a>
+                    <a href="{{ url_for('pricing') }}" class="nav-link {% if request.endpoint == 'pricing' %}active{% endif %}">Business Plans</a>
+                    <a href="{{ url_for('logout') }}" class="nav-link">Abmelden</a>
+                {% else %}
+                    <a href="{{ url_for('pricing') }}" class="nav-link {% if request.endpoint == 'pricing' %}active{% endif %}">Business Plans</a>
+>>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
                     <a href="{{ url_for('login') }}" class="nav-link {% if request.endpoint == 'login' %}active{% endif %}">Anmelden</a>
                 {% endif %}
             </div>

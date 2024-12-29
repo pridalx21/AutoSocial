@@ -3,59 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Login</title>
+    <title>Facebook Login - Instagram Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-<script>
-  function statusChangeCallback(response) {
-    console.log('statusChangeCallback');
-    console.log(response);
-    if (response.status === 'connected') {
-      // Erfolgreich eingeloggt - Weiterleitung zur Instagram-Authentifizierung
-      window.location.href = '/auth';
-    } else {
-      document.getElementById('status').innerHTML = 'Bitte loggen Sie sich ein.';
-    }
-  }
+    <div class="container">
+        <h1>Mit Facebook verbinden</h1>
+        
+        <div id="fb-root"></div>
+        <div id="status" class="status-message"></div>
+        
+        <script>
+            window.fbAsyncInit = function() {
+                FB.init({
+                    appId: '{{ facebook_app_id }}',
+                    cookie: true,
+                    xfbml: true,
+                    version: 'v19.0'
+                });
+                
+                FB.AppEvents.logPageView();   
+                
+                FB.getLoginStatus(function(response) {
+                    console.log('Initial status check:', response);
+                    statusChangeCallback(response);
+                });
+            };
+          
+            (function(d, s, id){
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) {return;}
+                js = d.createElement(s); js.id = id;
+                js.src = "https://connect.facebook.net/de_DE/sdk.js";
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));
 
-  function checkLoginState() {
-    FB.getLoginStatus(function(response) {
-      statusChangeCallback(response);
-    });
-  }
+            function statusChangeCallback(response) {
+                console.log('Status change:', response);
+                const statusDisplay = document.getElementById('status');
+                
+                switch(response.status) {
+                    case 'connected':
+                        statusDisplay.innerHTML = 'Verbinde mit Facebook...';
+                        handleConnected(response.authResponse);
+                        break;
+                    case 'not_authorized':
+                        statusDisplay.innerHTML = 'Bitte autorisieren Sie diese App.';
+                        break;
+                    default:
+                        statusDisplay.innerHTML = 'Bitte loggen Sie sich bei Facebook ein.';
+                }
+            }
 
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId      : '1672953986597793',  // Ihre App-ID
-      cookie     : true,
-      xfbml      : true,
-      version    : 'v21.0'  // Aktuelle API-Version
-    });
+            function handleConnected(authResponse) {
+                console.log('Connected:', authResponse);
+                
+                fetch('/facebook/callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        access_token: authResponse.accessToken,
+                        user_id: authResponse.userID
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/dashboard';
+                    } else {
+                        document.getElementById('status').innerHTML = 
+                            'Fehler: ' + (data.error || 'Unbekannter Fehler');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('status').innerHTML = 
+                        'Verbindungsfehler: ' + error.message;
+                });
+            }
+        </script>
 
-    FB.getLoginStatus(function(response) {
-      statusChangeCallback(response);
-    });
-  };
-</script>
-
-<div class="container">
-    <div class="card">
-        <h1>Instagram Manager Login</h1>
-        <div class="auth-section">
-            <!-- Facebook Login Button mit erforderlichen Berechtigungen -->
+        <div class="login-container">
             <fb:login-button 
-                scope="instagram_basic,instagram_content_publish,pages_read_engagement,pages_show_list"
-                onlogin="checkLoginState();"
+                scope="public_profile,email,instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement"
+                onlogin="statusChangeCallback"
                 size="large"
-                button-type="continue_with">
+                button-type="continue_with"
+                layout="rounded">
             </fb:login-button>
         </div>
-        <div id="status"></div>
-    </div>
-</div>
 
-<!-- Facebook SDK asynchron laden -->
-<script async defer crossorigin="anonymous" src="https://connect.facebook.net/de_DE/sdk.js"></script>
+        <style>
+            .status-message {
+                margin: 20px 0;
+                padding: 10px;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+            }
+            .login-container {
+                margin: 20px 0;
+                text-align: center;
+            }
+        </style>
+    </div>
 </body>
 </html>

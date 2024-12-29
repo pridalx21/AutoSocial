@@ -5,45 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nutzungsbedingungen - Instagram Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+        p {
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Nutzungsbedingungen</h1>
-        
-        <div class="content">
-            <h2>1. Allgemeines</h2>
-            <p>Diese Nutzungsbedingungen regeln die Nutzung der Instagram-Manager-Anwendung.</p>
 
-            <h2>2. Nutzung der App</h2>
-            <p>Die App dient ausschließlich der Verwaltung von Instagram-Beiträgen und -Medien. Der Nutzer verpflichtet sich:</p>
-            <ul>
-                <li>Die App nur für legale Zwecke zu nutzen</li>
-                <li>Keine schädlichen oder missbräuchlichen Inhalte zu posten</li>
-                <li>Die Instagram-Richtlinien einzuhalten</li>
-            </ul>
+        <h2>1. Geltungsbereich</h2>
+        <p>Diese Nutzungsbedingungen gelten für die Nutzung des Instagram Managers, betrieben von:<br>
+        Mischa Pridal<br>
+        Mühleweg 10a<br>
+        79379 Müllheim<br>
+        E-Mail: mischapridal@gmail.com</p>
 
-            <h2>3. Instagram API</h2>
-            <p>Die App nutzt die Instagram API unter Einhaltung der Meta-Plattform-Richtlinien. Der Nutzer erklärt sich damit einverstanden, dass:</p>
-            <ul>
-                <li>Nur autorisierte Zugriffe auf Instagram-Daten erfolgen</li>
-                <li>Die Nutzung im Rahmen der Instagram API-Nutzungsbedingungen erfolgt</li>
-            </ul>
+        <h2>2. Leistungsbeschreibung</h2>
+        <p>Der Instagram Manager bietet folgende Funktionen:</p>
+        <ul>
+            <li>Automatische Planung und Veröffentlichung von Instagram-Posts</li>
+            <li>Verwaltung von Medieninhalten</li>
+            <li>Analyse von Post-Performance</li>
+            <li>KI-gestützte Bildgenerierung und Hashtag-Vorschläge</li>
+        </ul>
 
-            <h2>4. Haftungsausschluss</h2>
-            <p>Die App wird "wie sie ist" zur Verfügung gestellt. Wir übernehmen keine Garantie für:</p>
-            <ul>
-                <li>Ununterbrochene Verfügbarkeit</li>
-                <li>Fehlerfreie Funktionalität</li>
-                <li>Eignung für bestimmte Zwecke</li>
-            </ul>
+        <h2>3. Nutzungsvoraussetzungen</h2>
+        <p>Zur Nutzung des Services benötigen Sie:</p>
+        <ul>
+            <li>Einen Instagram Business Account</li>
+            <li>Eine gültige E-Mail-Adresse</li>
+            <li>Einen Facebook-Account zur Authentifizierung</li>
+        </ul>
 
-            <h2>5. Änderungen</h2>
-            <p>Wir behalten uns das Recht vor, diese Nutzungsbedingungen jederzeit zu ändern. Wesentliche Änderungen werden den Nutzern mitgeteilt.</p>
-        </div>
+        <h2>4. Pflichten des Nutzers</h2>
+        <p>Als Nutzer verpflichten Sie sich:</p>
+        <ul>
+            <li>Keine rechtswidrigen Inhalte zu posten</li>
+            <li>Die Rechte Dritter zu respektieren</li>
+            <li>Ihre Zugangsdaten geheim zu halten</li>
+            <li>Die Instagram-Richtlinien einzuhalten</li>
+        </ul>
 
-        <div style="margin-top: 2rem; text-align: center;">
-            <a href="{{ url_for('index') }}" class="btn">Zurück zur Startseite</a>
-        </div>
+        <h2>5. Haftung</h2>
+        <p>Wir haften nicht für:</p>
+        <ul>
+            <li>Ausfälle oder Störungen der Instagram-API</li>
+            <li>Verlust von Daten</li>
+            <li>Schäden durch höhere Gewalt</li>
+            <li>Indirekte oder Folgeschäden</li>
+        </ul>
+
+        <h2>6. Kündigung</h2>
+        <p>Sie können Ihren Account jederzeit löschen. Wir behalten uns vor, Accounts bei Verstößen gegen diese Nutzungsbedingungen zu sperren.</p>
+
+        <h2>7. Änderungen</h2>
+        <p>Wir behalten uns vor, diese Nutzungsbedingungen zu ändern. Über wesentliche Änderungen werden Sie informiert.</p>
+
+        <h2>8. Schlussbestimmungen</h2>
+        <p>Es gilt deutsches Recht. Sollten einzelne Bestimmungen unwirksam sein, bleibt der Rest wirksam.</p>
+
+        <p>Stand: 28.12.2023</p>
     </div>
 </body>
 </html>

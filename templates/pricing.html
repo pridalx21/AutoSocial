@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5">Wähle deinen Business Plan</h1>
+    
+    <div class="row justify-content-center">
+        <!-- Monthly Plan -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h2 class="my-0">Monatsplan</h2>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title pricing-card-title text-center">€29.99<small class="text-muted">/Monat</small></h3>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Unbegrenzte Posts</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Analytics Dashboard</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Automatische Planung</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Email Support</li>
+                    </ul>
+                    <button type="button" class="btn btn-lg btn-block btn-primary" onclick="selectPlan('monthly', 29.99)">
+                        Jetzt auswählen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6-Month Plan -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h2 class="my-0">6-Monatsplan</h2>
+                    <span class="badge badge-light">Spare 20%</span>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title pricing-card-title text-center">€143.94<small class="text-muted">/6 Monate</small></h3>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Alle Features des Monatsplans</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Prioritäts-Support</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Erweiterte Analytics</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Custom Hashtag-Sets</li>
+                    </ul>
+                    <button type="button" class="btn btn-lg btn-block btn-success" onclick="selectPlan('sixmonth', 143.94)">
+                        Jetzt auswählen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yearly Plan -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-primary">
+                <div class="card-header bg-info text-white text-center py-4">
+                    <h2 class="my-0">Jahresplan</h2>
+                    <span class="badge badge-light">Spare 30%</span>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title pricing-card-title text-center">€251.88<small class="text-muted">/Jahr</small></h3>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Alle Features des 6-Monatsplans</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>24/7 Premium Support</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>KI-gestützte Bildoptimierung</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i>Wettbewerbsanalyse</li>
+                    </ul>
+                    <button type="button" class="btn btn-lg btn-block btn-info" onclick="selectPlan('yearly', 251.88)">
+                        Jetzt auswählen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for subscription confirmation -->
+<div class="modal fade" id="subscriptionModal" tabindex="-1" role="dialog" aria-labelledby="subscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="subscriptionModalLabel">Abo bestätigen</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Du hast den <span id="selectedPlan"></span> für <span id="selectedPrice"></span>€ ausgewählt.</p>
+                <p>Möchtest du fortfahren?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSubscription()">Bestätigen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedPlanData = null;
+
+function selectPlan(plan, price) {
+    selectedPlanData = {
+        plan: plan,
+        price: price
+    };
+    
+    // Update modal content
+    document.getElementById('selectedPlan').textContent = {
+        'monthly': 'Monatsplan',
+        'sixmonth': '6-Monatsplan',
+        'yearly': 'Jahresplan'
+    }[plan];
+    document.getElementById('selectedPrice').textContent = price;
+    
+    // Show modal
+    $('#subscriptionModal').modal('show');
+}
+
+function confirmSubscription() {
+    if (!selectedPlanData) return;
+    
+    // Here you would typically make an API call to your backend
+    fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(selectedPlanData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Danke für deine Anmeldung! Du wirst gleich zur Zahlung weitergeleitet.');
+            // Redirect to payment processing or dashboard
+            window.location.href = data.redirect_url;
+        } else {
+            alert('Es gab einen Fehler bei der Anmeldung. Bitte versuche es später erneut.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Es gab einen Fehler bei der Anmeldung. Bitte versuche es später erneut.');
+    });
+    
+    $('#subscriptionModal').modal('hide');
+}
+</script>
+{% endblock %}

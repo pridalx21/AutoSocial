@@ -3,7 +3,15 @@ services:
     name: instaapp
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn instaapp:app
+    startCommand: gunicorn instaapp:app --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: instaapp.py
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/static/uploads
+      sizeGB: 1
