@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import base64
 from datetime import datetime, timedelta
 from functools import wraps
@@ -6,11 +5,7 @@ import io
 import json
 import logging
 import os
-import os
-import os
 import secrets
-import time
-import time
 import time
 
 from PIL import Image
@@ -27,8 +22,6 @@ from flask import (
     session,
     url_for,
 )
-from openai import RateLimitError
-from openai import RateLimitError
 from openai import RateLimitError
 from werkzeug.utils import secure_filename
 
@@ -453,16 +446,11 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_info' not in session:
-<<<<<<< HEAD
             flash('Bitte melden Sie sich zuerst an', 'error')
-=======
-            flash('Bitte melden Sie sich an, um fortzufahren.', 'info')
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
-<<<<<<< HEAD
 # Funktion zur Generierung von Inhalten mit Hugging Face
 
 def generate_content_with_huggingface(prompt):
@@ -473,241 +461,6 @@ def generate_content_with_huggingface(prompt):
     except Exception as e:
         print(f'Error generating content: {e}')
         return None
-=======
-# Hugging Face API Configuration
-HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY')
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/"
-TEXT_MODEL = "HuggingFaceH4/zephyr-7b-beta"  # Besseres Modell für Text-Generierung
-IMAGE_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
-
-headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
-
-def query_huggingface(payload, model):
-    """Generic function to query Hugging Face API"""
-    try:
-        response = requests.post(
-            f"{HUGGINGFACE_API_URL}{model}",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-        response.raise_for_status()  # Raise an exception for bad status codes
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        app.logger.error(f"Error querying Hugging Face API: {str(e)}")
-        raise Exception(f"API request failed: {str(e)}")
-
-def generate_image_with_stable_diffusion(prompt):
-    """Generate image using Stable Diffusion"""
-    try:
-        response = requests.post(
-            f"{HUGGINGFACE_API_URL}{IMAGE_MODEL}",
-            headers=headers,
-            json={
-                "inputs": prompt,
-                "parameters": {
-                    "negative_prompt": "blurry, bad quality, distorted, ugly, deformed",
-                    "num_inference_steps": 30,
-                    "guidance_scale": 7.5
-                }
-            },
-            timeout=30
-        )
-        response.raise_for_status()
-        
-        # Die API gibt die Bilddaten direkt als Bytes zurück
-        image_bytes = response.content
-        
-        # Konvertiere zu Base64
-        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-        return f"data:image/jpeg;base64,{image_base64}"
-    except Exception as e:
-        app.logger.error(f"Error generating image: {str(e)}")
-        raise
-
-# Facebook/Instagram API Configuration
-FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID')
-FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')
-FACEBOOK_REDIRECT_URI = f'{BASE_URL}/facebook/callback'
-
-@app.route('/facebook/login')
-def facebook_login():
-    # Generate a random state parameter to prevent CSRF attacks
-    state = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
-    session['fb_state'] = state
-    
-    # Facebook OAuth URL
-    fb_oauth_url = 'https://www.facebook.com/v19.0/dialog/oauth'
-    params = {
-        'client_id': FACEBOOK_APP_ID,
-        'redirect_uri': FACEBOOK_REDIRECT_URI,
-        'state': state,
-        'scope': 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,public_profile'
-    }
-    
-    return redirect(f"{fb_oauth_url}?{urlencode(params)}")
-
-@app.route('/facebook/callback', methods=['GET', 'POST'])
-def facebook_callback():
-    if request.method == 'POST':
-        try:
-            data = request.get_json()
-            access_token = data.get('access_token')
-            fb_user_id = data.get('user_id')
-            
-            if not all([access_token, fb_user_id]):
-                app.logger.error("Missing required auth data")
-                return jsonify({'success': False, 'error': 'Fehlende Authentifizierungsdaten'})
-            
-            # Get user info from Facebook
-            try:
-                user_info_url = 'https://graph.facebook.com/v19.0/me'
-                response = requests.get(user_info_url, params={
-                    'access_token': access_token,
-                    'fields': 'id,name,email'
-                })
-                response.raise_for_status()
-                fb_user_info = response.json()
-                
-                # Verify user ID matches
-                if fb_user_info['id'] != fb_user_id:
-                    raise ValueError("User ID mismatch")
-                
-                # Find or create user
-                user = User.query.filter_by(facebook_id=fb_user_id).first()
-                if not user:
-                    # Generate a random password for the user
-                    random_password = secrets.token_urlsafe(32)
-                    user = User(
-                        username=fb_user_info.get('name'),
-                        email=fb_user_info.get('email'),
-                        facebook_id=fb_user_id,
-                        password_hash=generate_password_hash(random_password)
-                    )
-                    db.session.add(user)
-                
-                # Update Facebook token
-                user.facebook_token = access_token
-                db.session.commit()
-                
-                # Log the user in
-                session['user_info'] = {
-                    'username': user.username,
-                    'user_id': user.id
-                }
-                
-                return jsonify({'success': True})
-                
-            except requests.exceptions.RequestException as e:
-                app.logger.error(f"Facebook API error: {str(e)}")
-                return jsonify({'success': False, 'error': 'Fehler beim Abrufen der Benutzerinformationen'})
-                
-        except Exception as e:
-            app.logger.error(f'Facebook callback error: {str(e)}')
-            return jsonify({'success': False, 'error': str(e)})
-
-    # Handle GET request (initial OAuth callback)
-    if 'error' in request.args:
-        flash(f"Authorization failed: {request.args.get('error_description', 'Unknown error')}", 'error')
-        return redirect(url_for('login'))
-    
-    # Verify state parameter to prevent CSRF attacks
-    if request.args.get('state') != session.get('fb_state'):
-        flash('Invalid state parameter. Please try again.', 'error')
-        return redirect(url_for('login'))
-    
-    # Exchange code for access token
-    try:
-        code = request.args.get('code')
-        token_url = 'https://graph.facebook.com/v19.0/oauth/access_token'
-        response = requests.get(token_url, params={
-            'client_id': FACEBOOK_APP_ID,
-            'client_secret': FACEBOOK_APP_SECRET,
-            'redirect_uri': FACEBOOK_REDIRECT_URI,
-            'code': code
-        })
-        response.raise_for_status()
-        token_data = response.json()
-        
-        # Get user info from Facebook
-        user_info_url = 'https://graph.facebook.com/v19.0/me'
-        response = requests.get(user_info_url, params={
-            'access_token': token_data['access_token'],
-            'fields': 'id,name,email'
-        })
-        response.raise_for_status()
-        fb_user_info = response.json()
-        
-        # Find or create user
-        user = User.query.filter_by(facebook_id=fb_user_info['id']).first()
-        if not user:
-            # Generate a random password for the user
-            random_password = secrets.token_urlsafe(32)
-            user = User(
-                username=fb_user_info.get('name'),
-                email=fb_user_info.get('email'),
-                facebook_id=fb_user_info['id'],
-                password_hash=generate_password_hash(random_password)
-            )
-            db.session.add(user)
-        
-        # Update Facebook token
-        user.facebook_token = token_data['access_token']
-        db.session.commit()
-        
-        # Log the user in
-        session['user_info'] = {
-            'username': user.username,
-            'user_id': user.id
-        }
-        
-        flash('Successfully connected to Facebook!', 'success')
-        return redirect(url_for('dashboard'))
-        
-    except requests.exceptions.RequestException as e:
-        app.logger.error(f'Facebook OAuth error: {str(e)}')
-        flash('Failed to connect to Facebook. Please try again.', 'error')
-        return redirect(url_for('login'))
-
-@app.route('/api/schedule-post', methods=['POST'])
-@login_required
-@limiter.limit("10 per minute")
-def api_schedule_post():
-    try:
-        data = request.json
-        
-        # Berechne optimalen Postzeitpunkt
-        posting_time = calculate_optimal_posting_time(
-            data['ageRange'],
-            data['interests']
-        )
-        
-        # Speichere den Post in der Datenbank
-        new_post = Post(
-            user_id=1, # current_user.id,
-            image_url=data['imageUrl'],
-            caption=data['caption'],
-            hashtags=','.join(data['hashtags']),
-            scheduled_time=posting_time,
-            status='scheduled'
-        )
-        
-        db.session.add(new_post)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'scheduledTime': posting_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'message': f'Post geplant für {posting_time.strftime("%d.%m.%Y um %H:%M")} Uhr'
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Error scheduling post: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 
 @app.route('/generate_post', methods=['GET', 'POST'])
 def generate_post_function():
@@ -716,13 +469,8 @@ def generate_post_function():
         
         for attempt in range(10):  # Try 3 times
             try:
-<<<<<<< HEAD
                 response = generate_content_with_huggingface(prompt)
                 generated_post = response
-=======
-                response = query_huggingface({"inputs": prompt}, TEXT_MODEL)
-                generated_post = response[0]['generated_text']
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
                 return render_template('generate_post.html', generated_post=generated_post)
             except Exception as e:
                 return render_template('generate_post.html', error=f"An error occurred: {str(e)}")
@@ -730,118 +478,10 @@ def generate_post_function():
     return render_template('generate_post.html')
 
 @app.route('/')
-<<<<<<< HEAD
 def index():
     if 'user_info' not in session:
         session['user_info'] = FAKE_PROFILE.copy()
     return render_template('index.html')
-=======
-def root():
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if 'user_info' in session:
-        return redirect(url_for('dashboard'))
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        user = User.query.filter_by(email=email).first()
-        
-        if user and user.check_password(password):
-            session['user_info'] = {
-                'username': user.username,
-                'user_id': user.id
-            }
-            flash('Erfolgreich angemeldet!', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Ungültige Email oder Passwort', 'error')
-    
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('Sie wurden erfolgreich abgemeldet.', 'info')
-    return redirect(url_for('login'))
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    try:
-        # Get user info from session
-        user_info = session.get('user_info')
-        if not user_info:
-            app.logger.error("No user info in session")
-            flash('Bitte loggen Sie sich ein.', 'error')
-            return redirect(url_for('login'))
-            
-        # Verify Facebook token is still valid
-        try:
-            response = requests.get('https://graph.facebook.com/v19.0/me', params={
-                'access_token': user_info.get('facebook_token')
-            })
-            if response.status_code != 200:
-                app.logger.error(f"Facebook token validation failed: {response.text}")
-                flash('Ihre Facebook-Sitzung ist abgelaufen. Bitte loggen Sie sich erneut ein.', 'error')
-                return redirect(url_for('login'))
-        except requests.exceptions.RequestException as e:
-            app.logger.error(f"Facebook API error: {str(e)}")
-            flash('Fehler bei der Verbindung zu Facebook. Bitte versuchen Sie es erneut.', 'error')
-            return redirect(url_for('login'))
-        
-        # Get posts from database
-        try:
-            posts = Post.query.filter_by(user_id=user_info['user_id']).order_by(Post.scheduled_time.desc()).all()
-        except Exception as e:
-            app.logger.error(f"Database error while fetching posts: {str(e)}")
-            posts = []
-            flash('Fehler beim Laden der Posts. Bitte versuchen Sie es später erneut.', 'error')
-        
-        # Calculate statistics
-        current_time = datetime.now()
-        statistics = {
-            'total_posts': len(posts),
-            'scheduled_posts': len([p for p in posts if p.scheduled_time and p.scheduled_time > current_time]),
-            'published_posts': len([p for p in posts if p.status == 'published']),
-            'failed_posts': len([p for p in posts if p.status == 'failed']),
-            'pending_posts': len([p for p in posts if p.status == 'pending'])
-        }
-        
-        # Get Instagram account info if available
-        instagram_info = None
-        if user_info.get('facebook_token'):
-            try:
-                response = requests.get(
-                    'https://graph.facebook.com/v19.0/me/accounts',
-                    params={
-                        'access_token': user_info['facebook_token'],
-                        'fields': 'instagram_business_account{id,name,username,profile_picture_url}'
-                    }
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    for page in data.get('data', []):
-                        if 'instagram_business_account' in page:
-                            instagram_info = page['instagram_business_account']
-                            break
-            except Exception as e:
-                app.logger.error(f"Error fetching Instagram info: {str(e)}")
-        
-        return render_template('dashboard.html', 
-                             user_info=user_info,
-                             statistics=statistics,
-                             posts=posts,
-                             instagram_info=instagram_info)
-                             
-    except Exception as e:
-        app.logger.error(f"Dashboard error: {str(e)}")
-        flash('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.', 'error')
-        return render_template('500.html'), 500
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 
 @app.route('/dashboard')
 def dashboard():
@@ -923,10 +563,6 @@ def schedule_posts():
                 if media_file and media_file.filename:
                     media_filename = secure_filename(media_file.filename)
                     media_filepath = os.path.join(app.config['UPLOAD_FOLDER'], media_filename)
-<<<<<<< HEAD
-=======
-                    logger.debug(f'Saving image to: {media_filepath}')
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
                     try:
                         media_file.save(media_filepath)
                     except Exception as e:
@@ -1051,7 +687,6 @@ def schedule_post():
         flash(f'Fehler beim Planen des Beitrags: {str(e)}', 'error')
         return redirect(url_for('scheduler'))
 
-<<<<<<< HEAD
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -1098,304 +733,11 @@ def data_deletion():
 @app.route('/privacy-policy')
 def privacy_policy():
     return render_template('privacy-policy.html')
-=======
-@app.route('/api/generate-content', methods=['POST'])
-@login_required
-@limiter.limit("5 per minute")
-def generate_content():
-    if not HUGGINGFACE_API_KEY:
-        app.logger.error("Hugging Face API key is missing")
-        return jsonify({'error': 'Hugging Face API key is not configured'}), 500
-    
-    try:
-        data = request.json
-        app.logger.info(f"Received content generation request: {data}")
-        
-        required_fields = ['contentType', 'tone', 'interests', 'ageRange']
-        if not all(field in data for field in required_fields):
-            missing_fields = [field for field in required_fields if field not in data]
-            app.logger.error(f"Missing required fields: {missing_fields}")
-            return jsonify({'error': f'Missing required fields: {missing_fields}'}), 400
-        
-        try:
-            # Generate image prompt
-            app.logger.info("Generating image prompt...")
-            image_prompt = generate_image_prompt(data)
-            app.logger.info(f"Generated image prompt: {image_prompt}")
-            
-            # Generate image
-            app.logger.info("Generating image with Stable Diffusion...")
-            image_url = generate_image_with_stable_diffusion(image_prompt)
-            app.logger.info("Successfully generated image")
-            
-            # Generate caption and hashtags
-            app.logger.info("Generating text content...")
-            content = generate_text_content(data)
-            app.logger.info("Successfully generated text content")
-            
-            return jsonify({
-                'imageUrl': image_url,
-                'caption': content['caption'],
-                'hashtags': content['hashtags']
-            })
-            
-        except Exception as e:
-            app.logger.error(f"Error during content generation: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-            
-    except Exception as e:
-        app.logger.error(f"Error processing request: {str(e)}")
-        return jsonify({'error': f'Invalid request format: {str(e)}'}), 400
-
-def generate_image_prompt(data):
-    """Generate image prompt using Zephyr"""
-    system_prompt = """You are an expert at creating detailed image generation prompts that result in high-quality, 
-    Instagram-worthy images. Create a prompt that will generate a visually striking and professional image."""
-    
-    user_prompt = f"""Create a detailed image generation prompt for a {data['contentType']} post.
-    Target audience: {data['ageRange']} year olds
-    Interests: {', '.join(data['interests'])}
-    Tone: {data['tone']}
-    
-    The image should be:
-    - Visually striking and attention-grabbing
-    - Well-composed with good lighting
-    - Suitable for Instagram's square format
-    - Authentic and relatable
-    - Professional quality
-    
-    Provide only the image generation prompt, nothing else."""
-    
-    try:
-        response = query_huggingface({
-            "inputs": f"{system_prompt}\n\nUser: {user_prompt}\n\nAssistant:",
-            "parameters": {
-                "max_new_tokens": 100,
-                "temperature": 0.7,
-                "top_p": 0.95,
-                "return_full_text": False
-            }
-        }, TEXT_MODEL)
-        
-        # Clean up the response
-        prompt = response[0]['generated_text'].strip()
-        return prompt
-        
-    except Exception as e:
-        app.logger.error(f"Error generating image prompt: {str(e)}")
-        raise
-
-def generate_text_content(data):
-    """Generate caption and hashtags using Zephyr"""
-    system_prompt = """You are an expert Instagram content creator who writes engaging captions and selects trending hashtags.
-    Your responses should be in valid JSON format with 'caption' and 'hashtags' fields."""
-    
-    user_prompt = f"""Create an Instagram post caption and hashtags for a {data['contentType']} post.
-    
-    Target Audience:
-    - Age Range: {data['ageRange']}
-    - Interests: {', '.join(data['interests'])}
-    - Tone: {data['tone']}
-    
-    Requirements:
-    1. Caption should be engaging and authentic
-    2. Include emojis where appropriate
-    3. Use line breaks for readability
-    4. Include a call-to-action
-    5. Generate 10-15 relevant hashtags
-    
-    Format the response as JSON:
-    {{
-        "caption": "Your caption here",
-        "hashtags": ["hashtag1", "hashtag2"]
-    }}"""
-    
-    try:
-        response = query_huggingface({
-            "inputs": f"{system_prompt}\n\nUser: {user_prompt}\n\nAssistant:",
-            "parameters": {
-                "max_new_tokens": 250,
-                "temperature": 0.7,
-                "top_p": 0.95,
-                "return_full_text": False
-            }
-        }, TEXT_MODEL)
-        
-        # Extract JSON from the response
-        response_text = response[0]['generated_text']
-        
-        # Find JSON in the response
-        json_start = response_text.find('{')
-        json_end = response_text.rfind('}') + 1
-        
-        if json_start == -1 or json_end == 0:
-            # Fallback wenn kein JSON gefunden wurde
-            return {
-                'caption': response_text.strip(),
-                'hashtags': []
-            }
-            
-        json_str = response_text[json_start:json_end]
-        
-        try:
-            return json.loads(json_str)
-        except json.JSONDecodeError:
-            # Fallback wenn JSON ungültig ist
-            return {
-                'caption': response_text.strip(),
-                'hashtags': []
-            }
-            
-    except Exception as e:
-        app.logger.error(f"Error generating text content: {str(e)}")
-        raise
-
-def calculate_optimal_posting_time(target_age, interests):
-    """
-    Berechnet den optimalen Posting-Zeitpunkt basierend auf der Zielgruppe
-    """
-    # Basis-Zeitfenster für verschiedene Altersgruppen
-    age_windows = {
-        "13-17": [(15, 17), (19, 21)],  # Nachmittag nach Schule und früher Abend
-        "18-24": [(12, 14), (20, 23)],  # Mittagspause und später Abend
-        "25-34": [(11, 13), (19, 21)],  # Mittagspause und nach Arbeit
-        "35-44": [(9, 11), (20, 22)],   # Vormittag und Abend
-        "45+": [(8, 10), (19, 21)]      # Früher Morgen und früher Abend
-    }
-    
-    # Interessen-basierte Anpassungen (in Stunden)
-    interest_adjustments = {
-        "Mode & Beauty": 1,      # Eher später am Tag
-        "Fitness & Gesundheit": -2,  # Eher früher am Tag
-        "Reisen & Abenteuer": 0,
-        "Essen & Kochen": -1,    # Eher zur Essenszeit
-        "Technologie": 2,        # Eher später am Tag
-        "Business": -3           # Eher während Arbeitszeit
-    }
-    
-    # Standardzeitfenster falls Alter nicht erkannt
-    age_range = "18-24"
-    for age_key in age_windows.keys():
-        if age_key in target_age:
-            age_range = age_key
-            break
-    
-    # Wähle zufälliges Zeitfenster für den Tag
-    time_windows = age_windows[age_range]
-    selected_window = random.choice(time_windows)
-    
-    # Berechne Durchschnitt der Interessens-Anpassungen
-    total_adjustment = 0
-    for interest in interests:
-        if interest in interest_adjustments:
-            total_adjustment += interest_adjustments[interest]
-    avg_adjustment = total_adjustment / len(interests) if interests else 0
-    
-    # Berechne optimale Stunde innerhalb des Zeitfensters
-    start_hour, end_hour = selected_window
-    target_hour = min(max(start_hour + avg_adjustment, start_hour), end_hour)
-    
-    # Setze Datum auf morgen
-    tomorrow = datetime.now() + timedelta(days=1)
-    posting_time = tomorrow.replace(
-        hour=int(target_hour),
-        minute=random.randint(0, 59),
-        second=0,
-        microsecond=0
-    )
-    
-    return posting_time
-
-@app.route('/scheduled_posts', methods=['GET', 'POST'])
-def scheduled_posts():
-    # Lade alle geplanten Posts aus der Datenbank
-    posts = Post.query.filter_by(status='scheduled').all()
-    
-    # Formatiere die Posts für den Kalender
-    events = []
-    for post in posts:
-        events.append({
-            'id': post.id,
-            'title': post.caption[:30] + '...' if len(post.caption) > 30 else post.caption,
-            'start': post.scheduled_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'end': (post.scheduled_time + timedelta(minutes=30)).strftime('%Y-%m-%d %H:%M:%S'),
-            'imageUrl': post.image_url,
-            'caption': post.caption,
-            'hashtags': post.hashtags.split(',')
-        })
-    
-    return render_template('scheduled_posts.html', events=events)
-
-@app.route('/targeting')
-@login_required
-def targeting():
-    if 'user_info' not in session:
-        flash('Please log in first.', 'error')
-        return redirect(url_for('login'))
-    return render_template('targeting.html', user_info=session['user_info'])
-
-@app.route('/pricing')
-def pricing():
-    return render_template('pricing.html', user_info=session.get('user_info', {}))
-
-@app.route('/analytics')
-@login_required
-def analytics():
-    if 'user_info' not in session:
-        flash('Please log in first.', 'error')
-        return redirect(url_for('login'))
-    
-    try:
-        user = User.query.filter_by(username=session.get('username')).first()
-        posts = Post.query.filter_by(user_id=user.id).all() if user else []
-        stats = calculate_statistics(posts)
-        return render_template('analytics.html', stats=stats, user_info=session['user_info'])
-    except Exception as e:
-        app.logger.error(f"Error in analytics route: {str(e)}")
-        flash('Error loading analytics. Please try again later.', 'error')
-        return redirect(url_for('dashboard'))
-
-@app.route('/api/subscribe', methods=['POST'])
-@login_required
-def subscribe():
-    data = request.json
-    plan_type = data.get('plan')
-    price = data.get('price')
-    
-    if not plan_type or not price:
-        return jsonify({'success': False, 'error': 'Invalid plan data'})
-    
-    try:
-        # Create new subscription
-        subscription = Subscription(
-            user_id=session['user_id'],
-            plan_type=plan_type,
-            price=price
-        )
-        db.session.add(subscription)
-        db.session.commit()
-        
-        # Here you would typically redirect to a payment processor
-        # For now, we'll just redirect to the dashboard
-        return jsonify({
-            'success': True,
-            'redirect_url': url_for('dashboard')
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
 
-<<<<<<< HEAD
 @app.route('/calendar')
 @login_required
 def calendar():
@@ -1488,64 +830,6 @@ def generate_text_content(data):
     response = generate_content_with_huggingface(prompt)
     
     return json.loads(response)
-=======
-@app.route('/data-deletion')
-def data_deletion():
-    return render_template('data_deletion.html')
-
-# Public routes that don't require authentication
-PUBLIC_ROUTES = ['privacy', 'terms', 'data_deletion']
-
-@app.before_request
-def before_request():
-    # Create database tables if they don't exist
-    with app.app_context():
-        db.create_all()
-    
-    # Allow public routes without authentication
-    if request.endpoint in PUBLIC_ROUTES:
-        return None
-    
-    # Set secure headers
-    if os.environ.get('RENDER'):
-        if not request.is_secure:
-            # Redirect any non-secure requests to HTTPS
-            url = request.url.replace('http://', 'https://', 1)
-            return redirect(url, code=301)
-
-@app.after_request
-def after_request(response):
-    # Security headers
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    
-    # CORS headers
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    
-    return response
-
-# Error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    logger.error(f'Server Error: {str(error)}')
-    return render_template('500.html'), 500
-
-@app.errorhandler(413)
-def request_entity_too_large(error):
-    return jsonify({'error': 'File too large (max 100MB)'}), 413
-
-@app.errorhandler(429)
-def ratelimit_handler(error):
-    return jsonify({'error': f"Rate limit exceeded. {error.description}"}), 429
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 
 if __name__ == '__main__':
  ##   scheduler.start()
