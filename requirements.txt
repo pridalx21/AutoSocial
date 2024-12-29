@@ -1,12 +1,7 @@
 Flask==3.0.0
 Werkzeug==3.0.1
-<<<<<<< HEAD
 openai==1.3.5
 Pillow==10.1.0
-pillow
-=======
-Pillow==10.1.0
->>>>>>> dc979982b1f82ece89349ae2870946f35f803b75
 python-dotenv==1.0.0
 requests==2.31.0
 gunicorn==21.2.0
