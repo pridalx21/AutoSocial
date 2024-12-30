@@ -3,278 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Manager</title>
+    <title>Robethood Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #6c5ce7;
-            --accent-color: #7a5af8;
-            --border-color: #e0e0e0;
-            --gradient: linear-gradient(90deg, #6c5ce7, #7a5af8);
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f8f5ff;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
-
-        .hero-section {
-            background: var(--gradient);
-            padding: 80px 0;
+        header {
+            background-color: #ff9900;
             color: white;
-            text-align: center;
-            margin-bottom: 60px;
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
-        }
-
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .hero-title {
-            font-size: 48px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .hero-subtitle {
-            font-size: 20px;
-            opacity: 0.9;
-            margin-bottom: 30px;
-            animation: fadeInUp 0.8s ease;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: var(--primary-color);
-            padding: 15px 40px;
-            border-radius: 30px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            animation: fadeInUp 1s ease;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .features-section {
-            padding: 60px 0;
-            background: #f8f5ff;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-            animation: fadeInUp 1.2s ease;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(78, 0, 131, 0.1);
-        }
-
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-        }
-
-        .feature-title {
-            font-size: 24px;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
-
-        .feature-description {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .demo-section {
-            padding: 80px 0;
+            padding: 10px 20px;
             text-align: center;
         }
-
-        .demo-title {
-            font-size: 36px;
-            color: var(--primary-color);
-            margin-bottom: 40px;
-            animation: fadeInUp 1.4s ease;
-        }
-
-        .demo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .demo-card {
-            background: white;
-            border-radius: 12px;
+        .container {
+            width: 80%;
+            margin: auto;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(78, 0, 131, 0.1);
-            transition: all 0.3s ease;
-            animation: fadeInUp 1.6s ease;
         }
-
-        .demo-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(78, 0, 131, 0.2);
-        }
-
-        .demo-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-
-        .demo-content {
+        .card {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 20px 0;
             padding: 20px;
         }
-
-        .demo-card-title {
-            font-size: 20px;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-
-        .demo-description {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .demo-link {
-            display: inline-block;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .demo-link:hover {
-            color: var(--accent-color);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 36px;
-            }
-
-            .hero-subtitle {
-                font-size: 18px;
-            }
-
-            .features-grid,
-            .demo-grid {
-                grid-template-columns: 1fr;
-            }
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #ff7b00;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <section class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Instagram Post Manager</h1>
-            <p class="hero-subtitle">Plane und verwalte deine Instagram-Posts einfach und effizient</p>
-            <a href="{{ url_for('scheduler') }}" class="cta-button">Jetzt Posts planen</a>
+    <header>
+        <h1>Robethood Dashboard</h1>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>Willkommen im Dashboard</h2>
+            <p>Hier kannst du deine Werbung verwalten und analysieren.</p>
         </div>
-    </section>
-
-    <section class="features-section">
-        <div class="features-grid">
-            <a href="{{ url_for('scheduler') }}" class="feature-card">
-                <div class="feature-icon">📅</div>
-                <h3 class="feature-title">Post-Planer</h3>
-                <p class="feature-description">Plane deine Posts im Voraus und veröffentliche sie automatisch zum perfekten Zeitpunkt.</p>
-            </a>
-            <a href="{{ url_for('analytics') }}" class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">Analytics</h3>
-                <p class="feature-description">Verfolge die Performance deiner Posts und optimiere deine Content-Strategie.</p>
-            </a>
-            <a href="{{ url_for('targeting') }}" class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <h3 class="feature-title">Targeting</h3>
-                <p class="feature-description">Erreiche die richtige Zielgruppe mit optimierten Hashtags und Posting-Zeiten.</p>
-            </a>
-        </div>
-    </section>
-
-    <section class="demo-section">
-        <h2 class="demo-title">Wie es funktioniert</h2>
-        <div class="demo-grid">
-            <div class="demo-card">
-                <img src="https://via.placeholder.com/400x200" alt="Schritt 1" class="demo-image">
-                <div class="demo-content">
-                    <h3 class="demo-card-title">1. Medien hochladen</h3>
-                    <p class="demo-description">Wähle deine Bilder oder Videos aus und lade sie hoch.</p>
-                    <a href="#" class="demo-link">Mehr erfahren →</a>
-                </div>
-            </div>
-            <div class="demo-card">
-                <img src="https://via.placeholder.com/400x200" alt="Schritt 2" class="demo-image">
-                <div class="demo-content">
-                    <h3 class="demo-card-title">2. Zeit planen</h3>
-                    <p class="demo-description">Wähle den perfekten Zeitpunkt für deine Posts.</p>
-                    <a href="#" class="demo-link">Mehr erfahren →</a>
-                </div>
-            </div>
-            <div class="demo-card">
-                <img src="https://via.placeholder.com/400x200" alt="Schritt 3" class="demo-image">
-                <div class="demo-content">
-                    <h3 class="demo-card-title">3. Automatisch posten</h3>
-                    <p class="demo-description">Lehne dich zurück und lass die App für dich arbeiten.</p>
-                    <a href="#" class="demo-link">Mehr erfahren →</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="footer-content">
-            <a href="{{ url_for('data_deletion') }}" class="footer-link">Datenlöschung</a>
-            <a href="{{ url_for('privacy_policy') }}" class="footer-link">Datenschutz</a>
-            <a href="{{ url_for('terms') }}" class="footer-link">Nutzungsbedingungen</a>
-        </div>
+    </div>
+    <footer>
+        <p>&copy; 2024 Robethood</p>
     </footer>
 </body>
 </html>
