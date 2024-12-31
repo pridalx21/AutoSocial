@@ -3,56 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robethood Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #ff9900;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-        }
-        .container {
-            width: 80%;
-            margin: auto;
-            overflow: hidden;
-        }
-        .card {
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin: 20px 0;
-            padding: 20px;
-        }
-        footer {
-            text-align: center;
-            padding: 10px 0;
-            background-color: #ff7b00;
-            color: white;
-            position: relative;
-            bottom: 0;
-            width: 100%;
-        }
-    </style>
+    <title>Robethood Werbekampagnen-Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <header>
-        <h1>Robethood Dashboard</h1>
-    </header>
-    <div class="container">
-        <div class="card">
-            <h2>Willkommen im Dashboard</h2>
-            <p>Hier kannst du deine Werbung verwalten und analysieren.</p>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Navigation -->
+        <nav class="bg-green-600 text-white shadow-lg">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-xl font-bold">Robethood Werbekampagnen</div>
+                    <div class="flex space-x-4">
+                        <button id="connectBtn" class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-green-100">
+                            <i class="fas fa-plug mr-2"></i>API verbinden
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-6 py-8">
+            <!-- Platform Selection -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Plattformen auswählen</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="platform-card border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                        <i class="fab fa-facebook text-blue-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium">Facebook</h3>
+                        <input type="checkbox" class="mt-2" name="platform" value="facebook">
+                    </div>
+                    <div class="platform-card border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                        <i class="fab fa-instagram text-pink-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium">Instagram</h3>
+                        <input type="checkbox" class="mt-2" name="platform" value="instagram">
+                    </div>
+                    <div class="platform-card border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                        <i class="fab fa-google text-red-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium">Google Ads</h3>
+                        <input type="checkbox" class="mt-2" name="platform" value="google">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Settings -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Kampagnen-Einstellungen</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kampagnenname</label>
+                        <input type="text" id="campaignName" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Budget (€)</label>
+                        <input type="number" id="budget" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Startdatum</label>
+                        <input type="date" id="startDate" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Enddatum</label>
+                        <input type="date" id="endDate" class="w-full p-2 border rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Content -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Werbeanzeigen-Inhalt</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Titel</label>
+                        <input type="text" id="adTitle" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Beschreibung</label>
+                        <textarea id="adDescription" rows="4" class="w-full p-2 border rounded-lg"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bild/Video hochladen</label>
+                        <input type="file" id="mediaUpload" class="w-full p-2 border rounded-lg" accept="image/*,video/*">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4">
+                <button id="previewBtn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                    <i class="fas fa-eye mr-2"></i>Vorschau
+                </button>
+                <button id="saveBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-save mr-2"></i>Speichern
+                </button>
+                <button id="publishBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-paper-plane mr-2"></i>Veröffentlichen
+                </button>
+            </div>
         </div>
     </div>
-    <footer>
-        <p>&copy; 2024 Robethood</p>
-    </footer>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Vorschau</h3>
+                <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="previewContent"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
