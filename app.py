@@ -123,6 +123,10 @@ def logout():
     session.pop('user', None)  # Entferne den Benutzer aus der Sitzung
     return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
 
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
 @app.route('/privacy-policy')
 def privacy_policy():
     return render_template('privacy_policy.html')
