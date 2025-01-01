@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 Flask
-python-dotenv
 requests
-=======
 Flask==2.3.3
 Werkzeug==2.3.7
 gunicorn==20.1.0
@@ -11,4 +8,3 @@ python-dotenv==0.21.0
 beautifulsoup4==4.12.2
 selenium==4.15.2
 webdriver-manager==4.0.1
->>>>>>> 564af2107da5b66575541ffaced172c40a3cbb61
