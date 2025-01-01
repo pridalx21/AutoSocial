@@ -637,5 +637,5 @@ def instagram_data():
     }
     return render_template('instagram_data.html', data=instagram_info)
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+# if __name__ == '__main__':
+#     app.run(debug=True, port=5001)

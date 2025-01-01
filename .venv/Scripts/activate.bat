@@ -8,7 +8,11 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
+<<<<<<< HEAD
 set VIRTUAL_ENV=C:\Users\prida\Documents\Coding_Projects\instaapp\.venv
+=======
+set VIRTUAL_ENV=C:\Users\prida\Documents\Coding_Projects\robethood\.venv
+>>>>>>> 564af2107da5b66575541ffaced172c40a3cbb61
 
 if not defined PROMPT set PROMPT=$P$G
 
