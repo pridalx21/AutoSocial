@@ -118,5 +118,10 @@ def dashboard():
 def scheduler():
     return render_template('scheduler.html')
 
+@app.route('/logout')
+def logout():
+    session.pop('user', None)  # Entferne den Benutzer aus der Sitzung
+    return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=8080)
