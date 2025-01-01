@@ -18,6 +18,20 @@
                         <button id="connectBtn" class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-green-100">
                             <i class="fas fa-plug mr-2"></i>API verbinden
                         </button>
+                        <div class="relative">
+                            <button class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-green-100" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                                Menu
+                            </button>
+                            <ul class="absolute hidden bg-white shadow-lg rounded-lg mt-2">
+                                <li><a class="block px-4 py-2" href="{{ url_for('index') }}">Home</a></li>
+                                <li><a class="block px-4 py-2" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                                <li><a class="block px-4 py-2" href="{{ url_for('scheduler') }}">Scheduler</a></li>
+                                <li><a class="block px-4 py-2" href="{{ url_for('login') }}">Login</a></li>
+                                <li><a class="block px-4 py-2" href="{{ url_for('logout') }}">Logout</a></li>
+                                <li><a class="block px-4 py-2" href="{{ url_for('privacy_policy') }}">Privacy Policy</a></li>
+                                <li><a class="block px-4 py-2" href="{{ url_for('terms') }}">Terms</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,6 +132,5 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
 </body>
 </html>
