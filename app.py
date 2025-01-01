@@ -25,10 +25,6 @@ FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI')
 def index():
     return render_template('index.html')
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
@@ -39,7 +35,6 @@ def connect_api():
     try:
         if scraper is None:
             scraper = RobethoodScraper()
-        
         # Test connection by trying to get ads
         result = scraper.get_ads()
         if result['status'] == 'success':
@@ -49,7 +44,6 @@ def connect_api():
     except Exception as e:
         logger.error(f"Connection error: {str(e)}")
         response = {'status': 'error', 'message': f'Could not connect to Robethood: {str(e)}'}
-    
     return jsonify(response)
 
 @app.route('/api/ads', methods=['GET'])
@@ -58,7 +52,6 @@ def get_ads():
     try:
         if scraper is None:
             scraper = RobethoodScraper()
-        
         result = scraper.get_ads()
         return jsonify(result)
     except Exception as e:
@@ -70,7 +63,6 @@ def post_ad():
     data = request.json
     ad_id = data.get('ad_id')
     platforms = data.get('platforms', [])
-    
     try:
         # Here you would implement the actual posting logic
         # For now, we'll just return a success message
@@ -98,15 +90,11 @@ def facebook_callback():
     token_response = requests.get(f"https://graph.facebook.com/v10.0/oauth/access_token?client_id={FACEBOOK_CLIENT_ID}&redirect_uri={FACEBOOK_REDIRECT_URI}&client_secret={FACEBOOK_CLIENT_SECRET}&code={code}")
     token_info = token_response.json()
     access_token = token_info.get('access_token')
-
     # Use the access token to get user info
     user_info_response = requests.get(f"https://graph.facebook.com/me?access_token={access_token}&fields=id,name,email")
     user_info = user_info_response.json()
-
-    # Save user info in session or database
-    session['user'] = user_info
-
-    return redirect(url_for('dashboard'))  # Redirect to the dashboard or another page
+    # Handle user info (e.g., create a session, store user data, etc.)
+    return jsonify(user_info)
 
 @app.route('/dashboard')
 def dashboard():
