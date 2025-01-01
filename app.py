@@ -123,5 +123,9 @@ def logout():
     session.pop('user', None)  # Entferne den Benutzer aus der Sitzung
     return redirect(url_for('login'))  # Weiterleitung zur Login-Seite
 
+@app.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=8080)
