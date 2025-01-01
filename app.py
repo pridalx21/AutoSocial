@@ -22,6 +22,10 @@ FACEBOOK_CLIENT_SECRET = os.getenv('FACEBOOK_CLIENT_SECRET')
 FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI')
 
 @app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/')
 def home():
     return render_template('index.html')
 
