@@ -23,7 +23,7 @@ FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI')
 
 @app.route('/')
 def index():
-    return render_template('login.html')
+    return render_template('login.html', data={})
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
