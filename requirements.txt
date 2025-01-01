@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Flask
 python-dotenv
 requests
