@@ -1,1 +1,1 @@
-web: gunicorn instaapp:app --log-file -
+web: python c:/Users/prida/Documents/Coding_Projects/instaapp/instaapp.py

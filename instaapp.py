@@ -1,3 +1,14 @@
+import os
+from dotenv import load_dotenv
+import requests
+# Lade die Umgebungsvariablen
+load_dotenv()
+
+# Zugriff auf die Umgebungsvariablen
+INSTAGRAM_APP_ID = os.getenv('INSTAGRAM_APP_ID')
+INSTAGRAM_APP_SECRET = os.getenv('INSTAGRAM_APP_SECRET')
+INSTAGRAM_REDIRECT_URI = os.getenv('INSTAGRAM_REDIRECT_URI')
+
 import base64
 from datetime import datetime, timedelta
 from functools import wraps
@@ -26,6 +37,7 @@ from werkzeug.utils import secure_filename
 
 from transformers import pipeline
 
+
 # Load environment variables from .env file
 load_dotenv()
 print("OpenAI API Key:", os.getenv('OPENAI_API_KEY'))
@@ -45,6 +57,42 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Logging konfigurieren
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_with_api():  # Ändere den Namen hier
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        if not username or not password:
+            flash('Benutzername und Passwort sind erforderlich', 'error')
+            return redirect(url_for('index'))
+
+        # Instagram API-Integration
+        access_token_url = 'https://api.instagram.com/oauth/access_token'  # Definiere die URL hier
+        payload = {
+            'client_id': INSTAGRAM_APP_ID,
+            'client_secret': INSTAGRAM_APP_SECRET,
+            'grant_type': 'password',
+            'username': username,
+            'password': password,
+            'redirect_uri': INSTAGRAM_REDIRECT_URI
+        }
+
+        response = requests.post(access_token_url, data=payload)
+        data = response.json()
+
+        print("Response from Instagram API:", data)  # Debugging-Log
+
+        if response.status_code == 200 and 'access_token' in data:
+            session['user_info'] = data  # Speichere die Benutzerinformationen in der Sitzung
+            flash('Erfolgreich eingeloggt!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Ungültige Anmeldedaten!', 'error')
+            return redirect(url_for('index'))
+
+    return render_template('login.html')
 
 # File Upload Configuration
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -437,21 +485,23 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
+
         if not username or not password:
-            flash('Username and password are required', 'error')
+            flash('Benutzername und Passwort sind erforderlich', 'error')
             return redirect(url_for('index'))
-            
-        # For demo purposes, using fake profile
-        # In production, this should validate against a secure database
-        if username == 'test_user':
+
+        # Hier sollte die API-Integration zur Überprüfung der Anmeldedaten erfolgen
+        # Beispiel: response = requests.post('https://api.instagram.com/oauth/access_token', data={...})
+        # Überprüfen, ob die Anmeldedaten gültig sind
+        valid_credentials = True  # Platzhalter für die API-Integration
+        if valid_credentials:
             session['user_info'] = FAKE_PROFILE.copy()
-            flash('Successfully logged in', 'success')
+            flash('Erfolgreich eingeloggt!', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Invalid credentials', 'error')
+            flash('Ungültige Anmeldedaten!', 'error')
             return redirect(url_for('index'))
-            
+
     return render_template('login.html')
 
 @app.route('/logout')
@@ -576,5 +626,16 @@ def generate_text_content(data):
     
     return json.loads(response)
 
+@app.route('/instagram_data')
+def instagram_data():
+    # Simulierte Instagram-Daten
+    instagram_info = {
+        'username': 'dein_username',
+        'followers': 150,
+        'following': 75,
+        'posts': 30
+    }
+    return render_template('instagram_data.html', data=instagram_info)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
