@@ -114,5 +114,9 @@ def dashboard():
         return f"Willkommen, {session['user']['name']}!"
     return redirect(url_for('login'))
 
+@app.route('/scheduler')
+def scheduler():
+    return render_template('scheduler.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=8080)
