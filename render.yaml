@@ -9,7 +9,7 @@ services:
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18
+        value: 3.8.1
       - key: ROBETHOOD_API_KEY
         value: 2b64543f-b30f-4c56-b6ca-110bbfd9ed30
       - key: ROBETHOOD_API_URL
